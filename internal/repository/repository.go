@@ -13,6 +13,7 @@ type Nodes interface {
 	AddNode(ip string, domain string) (sql.Result, error)
 	ListAllNodes() ([]models.NodeAgent, error)
 	GetNode(ip string) (models.NodeAgent, error)
+	CheckNodeExistence(ip string) (bool, error)
 }
 
 type Repository struct {

@@ -50,3 +50,13 @@ func (n *NodesLite) GetNode(ip string) (models.NodeAgent, error) {
 	}
 	return node, nil
 }
+
+func (n *NodesLite) CheckNodeExistence(ip string) (bool, error) {
+	var isExist bool
+	err := n.db.QueryRow("SELECT exists (SELECT 1 FROM Nodes WHERE ip == $1)", ip).Scan(&isExist)
+	if err != nil {
+		return false, err
+	}
+
+	return isExist, nil
+}
