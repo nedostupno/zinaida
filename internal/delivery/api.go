@@ -18,6 +18,7 @@ type Api struct {
 func (a *Api) Init() {
 	router := mux.NewRouter()
 	router.Handle("/api/map/", GetMap()).Methods("GET")
+	router.Handle("/api/nodes/", GetNodes(a)).Methods("GET")
 	router.Handle("/api/nodes/", CreateNode(a)).Methods("POST")
 	router.Handle("/api/nodes/{id:[0-9]+}", GetNodeInfo()).Methods("GET")
 	router.Handle("/api/nodes/{id:[0-9]+}", DeleteNode()).Methods("DELETE")
