@@ -23,9 +23,24 @@ func GetNodes() http.Handler {
 	})
 }
 
-func CreateNode() http.Handler {
+func CreateNode(a *Api) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Handler CreateNode not implemented"))
+		var n models.NodeAgent
+		decoder := json.NewDecoder(r.Body)
+		if err := decoder.Decode(&n); err != nil {
+			m := utils.Message(false, "Incorrect request data")
+			utils.Respond(w, m)
+			return
+		}
+		defer r.Body.Close()
+
+		result, err := a.Repo.AddNode(n.Ip, n.Domain)
+		if err != nil {
+			m := utils.Message(false, err.Error())
+			utils.Respond(w, m)
+			return
+		}
+		w.Write([]byte(fmt.Sprintf("НодаАгент успешно зарегистрирована: %v", result)))
 	})
 }
 

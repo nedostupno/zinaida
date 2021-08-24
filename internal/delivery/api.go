@@ -7,17 +7,18 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/nedostupno/zinaida/internal/auth"
+	"github.com/nedostupno/zinaida/internal/repository"
 )
 
 type Api struct {
 	Router *mux.Router
+	Repo   *repository.Repository
 }
 
 func (a *Api) Init() {
 	router := mux.NewRouter()
 	router.Handle("/api/map/", GetMap()).Methods("GET")
-	router.Handle("/api/nodes/", GetNodes()).Methods("GET")
-	router.Handle("/api/nodes/", CreateNode()).Methods("POST")
+	router.Handle("/api/nodes/", CreateNode(a)).Methods("POST")
 	router.Handle("/api/nodes/{id:[0-9]+}", GetNodeInfo()).Methods("GET")
 	router.Handle("/api/nodes/{id:[0-9]+}", DeleteNode()).Methods("DELETE")
 	router.Handle("/api/nodes/{id:[0-9]+}/stat/", GetStat()).Methods("GET")
