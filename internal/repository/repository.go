@@ -12,6 +12,7 @@ type User interface {
 type Nodes interface {
 	AddNode(ip string, domain string) (sql.Result, error)
 	ListAllNodes() ([]models.NodeAgent, error)
+	GetNode(ip string) (models.NodeAgent, error)
 }
 
 type Repository struct {
