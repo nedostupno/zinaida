@@ -17,9 +17,15 @@ func GetMap() http.Handler {
 	})
 }
 
-func GetNodes() http.Handler {
+func GetNodes(a *Api) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Handler GetNodes not implemented"))
+		nodes, err := a.Repo.ListAllNodes()
+		if err != nil {
+			m := utils.Message(false, err.Error())
+			utils.Respond(w, m)
+			return
+		}
+		w.Write([]byte(fmt.Sprintf("Список нод Агентов: %v", nodes)))
 	})
 }
 
