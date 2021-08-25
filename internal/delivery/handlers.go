@@ -10,11 +10,26 @@ import (
 	"github.com/nedostupno/zinaida/internal/auth"
 	"github.com/nedostupno/zinaida/internal/auth/utils"
 	models "github.com/nedostupno/zinaida/internal/models"
+	"github.com/nedostupno/zinaida/traceroute"
 )
 
-func GetMap() http.Handler {
+func GetMap(a *Api) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Handler GetMap not implemented"))
+		ips, err := a.Repo.GetAllNodesIP()
+		if err != nil {
+			m := utils.Message(false, err.Error())
+			utils.Respond(w, m)
+			return
+		}
+
+		traceMap, err := traceroute.Traceroute(ips)
+		if err != nil {
+			m := utils.Message(false, err.Error())
+			utils.Respond(w, m)
+			return
+		}
+
+		w.Write([]byte(fmt.Sprintf("Карта сети: %v", traceMap)))
 	})
 }
 
