@@ -85,6 +85,24 @@ func (n *NodesLite) CheckNodeExistenceByID(id string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
 	return isExist, nil
+}
+
+func (n *NodesLite) GetAllNodesIP() ([]string, error) {
+	rows, err := n.db.Query("SELECT ip FROM Nodes")
+	if err != nil {
+		return nil, err
+	}
+
+	var ips []string
+
+	for rows.Next() {
+		var ip string
+		err := rows.Scan(&ip)
+		if err != nil {
+			return nil, err
+		}
+		ips = append(ips, ip)
+	}
+	return ips, nil
 }

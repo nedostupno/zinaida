@@ -17,6 +17,7 @@ type Nodes interface {
 	DeleteNode(id string) (sql.Result, error)
 	CheckNodeExistenceByIP(ip string) (bool, error)
 	CheckNodeExistenceByID(id string) (bool, error)
+	GetAllNodesIP() ([]string, error)
 }
 
 type Repository struct {
