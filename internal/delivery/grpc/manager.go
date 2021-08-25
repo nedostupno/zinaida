@@ -27,7 +27,7 @@ func (s server) Registrate(ctx context.Context, r *manager.RegistrateRequest) (*
 			return nil, err
 		}
 
-		isExist, err := s.repo.CheckNodeExistence(ip.String())
+		isExist, err := s.repo.CheckNodeExistenceByIP(ip.String())
 		if err != nil {
 			return nil, err
 		}
@@ -56,7 +56,7 @@ func (s server) Registrate(ctx context.Context, r *manager.RegistrateRequest) (*
 		return resp, nil
 	}
 
-	isExist, err := s.repo.CheckNodeExistence(ip)
+	isExist, err := s.repo.CheckNodeExistenceByIP(ip)
 	if err != nil {
 		return nil, err
 	}

@@ -66,9 +66,28 @@ func GetNodeInfo(a *Api) http.Handler {
 	})
 }
 
-func DeleteNode() http.Handler {
+func DeleteNode(a *Api) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Handler DeleteNode not implemented"))
+		vars := mux.Vars(r)
+		id := vars["id"]
+
+		ifExist, err := a.Repo.Nodes.CheckNodeExistenceByID(id)
+		if err != nil {
+			m := utils.Message(false, err.Error())
+			utils.Respond(w, m)
+		}
+
+		if ifExist {
+			_, err = a.Repo.DeleteNode(id)
+			if err != nil {
+				m := utils.Message(false, err.Error())
+				utils.Respond(w, m)
+			}
+
+			w.Write([]byte(fmt.Sprintf("Нода-агент с id %s успешно удалена из мониторинга", id)))
+		}
+
+		w.Write([]byte(fmt.Sprintf("Нода-агент с id %s не находится в мониторинге. ", id)))
 	})
 }
 

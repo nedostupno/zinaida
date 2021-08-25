@@ -24,6 +24,14 @@ func (n *NodesLite) AddNode(ip string, domain string) (sql.Result, error) {
 	return result, nil
 }
 
+func (n *NodesLite) DeleteNode(id string) (sql.Result, error) {
+	result, err := n.db.Exec("DELETE FROM Nodes WHERE id = $1", id)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 func (n *NodesLite) ListAllNodes() ([]models.NodeAgent, error) {
 	rows, err := n.db.Query("SELECT * FROM Nodes")
 	if err != nil {
@@ -61,9 +69,19 @@ func (n *NodesLite) GetNodeByID(id string) (models.NodeAgent, error) {
 	return node, nil
 }
 
-func (n *NodesLite) CheckNodeExistence(ip string) (bool, error) {
+func (n *NodesLite) CheckNodeExistenceByIP(ip string) (bool, error) {
 	var isExist bool
 	err := n.db.QueryRow("SELECT exists (SELECT 1 FROM Nodes WHERE ip == $1)", ip).Scan(&isExist)
+	if err != nil {
+		return false, err
+	}
+
+	return isExist, nil
+}
+
+func (n *NodesLite) CheckNodeExistenceByID(id string) (bool, error) {
+	var isExist bool
+	err := n.db.QueryRow("SELECT exists (SELECT 1 FROM Nodes WHERE id == $1)", id).Scan(&isExist)
 	if err != nil {
 		return false, err
 	}

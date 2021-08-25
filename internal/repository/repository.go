@@ -14,7 +14,9 @@ type Nodes interface {
 	ListAllNodes() ([]models.NodeAgent, error)
 	GetNodeByIP(ip string) (models.NodeAgent, error)
 	GetNodeByID(id string) (models.NodeAgent, error)
-	CheckNodeExistence(ip string) (bool, error)
+	DeleteNode(id string) (sql.Result, error)
+	CheckNodeExistenceByIP(ip string) (bool, error)
+	CheckNodeExistenceByID(id string) (bool, error)
 }
 
 type Repository struct {
