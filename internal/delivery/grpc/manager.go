@@ -41,7 +41,7 @@ func (s server) Registrate(ctx context.Context, r *manager.RegistrateRequest) (*
 			return nil, err
 		}
 
-		node, err := s.repo.GetNode(ip.String())
+		node, err := s.repo.GetNodeByIP(ip.String())
 		if err != nil {
 			return nil, err
 		}
@@ -70,7 +70,7 @@ func (s server) Registrate(ctx context.Context, r *manager.RegistrateRequest) (*
 		return nil, err
 	}
 
-	node, err := s.repo.GetNode(ip)
+	node, err := s.repo.GetNodeByIP(ip)
 	if err != nil {
 		return nil, err
 	}

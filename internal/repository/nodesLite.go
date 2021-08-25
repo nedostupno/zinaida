@@ -41,8 +41,18 @@ func (n *NodesLite) ListAllNodes() ([]models.NodeAgent, error) {
 	return allNodes, nil
 }
 
-func (n *NodesLite) GetNode(ip string) (models.NodeAgent, error) {
+func (n *NodesLite) GetNodeByIP(ip string) (models.NodeAgent, error) {
 	row := n.db.QueryRow("SELECT * FROM Nodes WHERE ip = $1", ip)
+	node := models.NodeAgent{}
+	err := row.Scan(&node.Id, &node.Ip, &node.Domain)
+	if err != nil {
+		return models.NodeAgent{}, err
+	}
+	return node, nil
+}
+
+func (n *NodesLite) GetNodeByID(id string) (models.NodeAgent, error) {
+	row := n.db.QueryRow("SELECT * FROM Nodes WHERE id = $1", id)
 	node := models.NodeAgent{}
 	err := row.Scan(&node.Id, &node.Ip, &node.Domain)
 	if err != nil {

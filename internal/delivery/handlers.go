@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/gorilla/mux"
 	"github.com/nedostupno/zinaida/internal/auth"
 	"github.com/nedostupno/zinaida/internal/auth/utils"
 	models "github.com/nedostupno/zinaida/internal/models"
@@ -50,10 +51,18 @@ func CreateNode(a *Api) http.Handler {
 	})
 }
 
-func GetNodeInfo() http.Handler {
+func GetNodeInfo(a *Api) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id := vars["id"]
 
-		w.Write([]byte("Handler GetNodeInfo not implemented"))
+		node, err := a.Repo.GetNodeByID(id)
+		if err != nil {
+			m := utils.Message(false, err.Error())
+			utils.Respond(w, m)
+		}
+
+		w.Write([]byte(fmt.Sprintf("%v", node)))
 	})
 }
 
