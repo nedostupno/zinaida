@@ -22,15 +22,22 @@ func GetMap(a *Api) http.Handler {
 			utils.Respond(w, m)
 			return
 		}
+		fmt.Println(ips)
 
-		traceMap, err := traceroute.Traceroute(ips)
+		traceMap, err := traceroute.Trace(ips)
 		if err != nil {
 			m := utils.Message(false, err.Error())
 			utils.Respond(w, m)
 			return
 		}
 
-		w.Write([]byte(fmt.Sprintf("Карта сети: %v", traceMap)))
+		fmt.Println(traceMap)
+		jsnResp, err := json.Marshal(traceMap)
+		if err != nil {
+			m := utils.Message(false, err.Error())
+			utils.Respond(w, m)
+		}
+		w.Write([]byte(string(jsnResp)))
 	})
 }
 
@@ -42,7 +49,12 @@ func GetNodes(a *Api) http.Handler {
 			utils.Respond(w, m)
 			return
 		}
-		w.Write([]byte(fmt.Sprintf("Список нод Агентов: %v", nodes)))
+		jsnResp, err := json.Marshal(nodes)
+		if err != nil {
+			m := utils.Message(false, err.Error())
+			utils.Respond(w, m)
+		}
+		w.Write([]byte(string(jsnResp)))
 	})
 }
 
@@ -57,13 +69,20 @@ func CreateNode(a *Api) http.Handler {
 		}
 		defer r.Body.Close()
 
-		result, err := a.Repo.AddNode(n.Ip, n.Domain)
+		_, err := a.Repo.AddNode(n.Ip, n.Domain)
 		if err != nil {
 			m := utils.Message(false, err.Error())
 			utils.Respond(w, m)
 			return
 		}
-		w.Write([]byte(fmt.Sprintf("НодаАгент успешно зарегистрирована: %v", result)))
+
+		node, err := a.Repo.GetNodeByIP(n.Ip)
+		if err != nil {
+			m := utils.Message(false, err.Error())
+			utils.Respond(w, m)
+		}
+
+		w.Write([]byte(fmt.Sprintf("НодаАгент успешно зарегистрирована: %v", node)))
 	})
 }
 
@@ -77,8 +96,12 @@ func GetNodeInfo(a *Api) http.Handler {
 			m := utils.Message(false, err.Error())
 			utils.Respond(w, m)
 		}
-
-		w.Write([]byte(fmt.Sprintf("%v", node)))
+		jsnResp, err := json.Marshal(node)
+		if err != nil {
+			m := utils.Message(false, err.Error())
+			utils.Respond(w, m)
+		}
+		w.Write([]byte(string(jsnResp)))
 	})
 }
 
