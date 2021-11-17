@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/nedostupno/zinaida/internal/repository"
+	"github.com/nedostupno/zinaida/proto/agent"
 	"github.com/nedostupno/zinaida/proto/manager"
 	"google.golang.org/grpc"
 )
@@ -102,4 +103,42 @@ func RunServer(repo *repository.Repository) {
 	if err := srv.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %s", err)
 	}
+}
+
+func GetStat(ip string) (*agent.GetServerStatResponse, error) {
+
+	conn, err := grpc.Dial(fmt.Sprintf("%v:22843", ip), grpc.WithInsecure())
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	c := agent.NewAgentClient(conn)
+	r := &agent.GetServerStatRequest{
+		Void: &agent.Void{},
+	}
+
+	resp, err := c.GetServerStat(context.Background(), r)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return resp, nil
+
+	// c := manager.NewManagerClient(conn)
+	// r := &manager.RegistrateRequest{}
+	// domain := os.Getenv("DOMAIN_AGENT")
+	// ip := os.Getenv("IP_AGENT")
+
+	// if domain == "" {
+	// 	r.Node = &manager.RegistrateRequest_Ip{ip}
+	// } else {
+	// 	r.Node = &manager.RegistrateRequest_Domain{domain}
+	// }
+
+	// resp, err := Registrate(context.Background(), c, r)
+	// if err != nil {
+	// 	log.Println("Yps...... Nice Error: ", err)
+	// }
+
+	// fmt.Println(resp)
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/nedostupno/zinaida/internal/auth"
 	"github.com/nedostupno/zinaida/internal/auth/utils"
+	"github.com/nedostupno/zinaida/internal/delivery/grpc"
 	models "github.com/nedostupno/zinaida/internal/models"
 	"github.com/nedostupno/zinaida/traceroute"
 )
@@ -100,15 +101,32 @@ func DeleteNode(a *Api) http.Handler {
 			}
 
 			w.Write([]byte(fmt.Sprintf("Нода-агент с id %s успешно удалена из мониторинга", id)))
+		} else {
+			w.Write([]byte(fmt.Sprintf("Нода-агент с id %s не находится в мониторинге. ", id)))
 		}
-
-		w.Write([]byte(fmt.Sprintf("Нода-агент с id %s не находится в мониторинге. ", id)))
 	})
 }
 
-func GetStat() http.Handler {
+func GetStat(a *Api) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Handler GetStat not implemented"))
+		vars := mux.Vars(r)
+		id := vars["id"]
+		node, err := a.Repo.GetNodeByID(id)
+		if err != nil {
+			m := utils.Message(false, err.Error())
+			utils.Respond(w, m)
+		}
+		resp, err := grpc.GetStat(node.Ip)
+		if err != nil {
+			m := utils.Message(false, err.Error())
+			utils.Respond(w, m)
+		}
+		jsnResp, err := json.Marshal(resp)
+		if err != nil {
+			m := utils.Message(false, err.Error())
+			utils.Respond(w, m)
+		}
+		w.Write([]byte(string(jsnResp)))
 	})
 }
 
