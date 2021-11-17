@@ -22,3 +22,18 @@ type NodeAgent struct {
 	Ip     string `json:"ip"`
 	Domain string `json:"domain"`
 }
+
+type CPU struct {
+	Model   string
+	Cpu_s   string
+	Min_MHz string
+	Max_MHz string
+}
+
+type TopProc struct {
+	First  string
+	Second string
+	Third  string
+	Fourth string
+	Fifth  string
+}

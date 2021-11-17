@@ -4,9 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"os"
 
+	"github.com/nedostupno/zinaida/proto/agent"
 	"github.com/nedostupno/zinaida/proto/manager"
+	"github.com/nedostupno/zinaida/stat"
 	"google.golang.org/grpc"
 )
 
@@ -34,12 +37,71 @@ func main() {
 	}
 
 	fmt.Println(resp)
+
+	RunServer()
 }
 
 func Registrate(ctx context.Context, c manager.ManagerClient, r *manager.RegistrateRequest) (*manager.RegistrateResponse, error) {
-	response, err := c.Registrate(ctx, r)
+	return c.Registrate(ctx, r)
+}
+
+type server struct {
+	agent.UnimplementedAgentServer
+}
+
+func RunServer() {
+	srv := grpc.NewServer()
+	port := 22843
+	ip := os.Getenv("AGENT_IP")
+
+	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", ip, port))
 	if err != nil {
-		return response, err
+		log.Fatalf("failed to listen: %v", err)
 	}
+
+	var s server
+	agent.RegisterAgentServer(srv, s)
+
+	if err := srv.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %s", err)
+	}
+}
+
+func (s server) GetServerStat(ctx context.Context, r *agent.GetServerStatRequest) (*agent.GetServerStatResponse, error) {
+	cpu, err := stat.GetCpuInfo()
+	if err != nil {
+		return nil, err
+	}
+
+	la, err := stat.GetLA()
+	if err != nil {
+		return nil, err
+	}
+
+	topProc, err := stat.GetTopProc()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &agent.GetServerStatResponse{
+		ServerStat: &agent.ServerStat{
+			Cpu: &agent.CPU{
+				Model:   cpu.Model,
+				CpuS:    cpu.Cpu_s,
+				Min_MHz: cpu.Min_MHz,
+				Max_MXz: cpu.Max_MHz,
+			},
+			La: la,
+			TopProc: &agent.TopProc{
+				FirstProc:  topProc.First,
+				SecondProc: topProc.Second,
+				ThirdProc:  topProc.Third,
+				FourthProc: topProc.Fourth,
+				FifthProc:  topProc.Fifth,
+			},
+		},
+		Err: "",
+	}
+
 	return response, nil
 }

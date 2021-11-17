@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package agent;
+
+option go_package = "./proto/agent";
+
+
+
+message CPU {
+    string model = 1;
+    string cpu_s = 2;
+    string min_MHz = 3;
+    string max_MXz = 4;
+}
+
+
+message TopProc {
+    string first_proc = 1;
+    string second_proc = 2;
+    string third_proc = 3;
+    string fourth_proc = 4;
+    string fifth_proc = 5; 
+}
+
+message ServerStat {
+    CPU cpu = 1;
+    string la = 2;
+    TopProc top_proc = 3;
+}
+
+// 
+message GetServerStatRequest {}
+
+message GetServerStatResponse {
+    ServerStat serverStat = 1;
+    string err = 2;    
+}
+
+message Void {}
+
+service agent {
+    rpc GetServerStat (GetServerStatRequest) returns (GetServerStatResponse);
+}
