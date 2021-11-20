@@ -4,7 +4,11 @@ package agent;
 
 option go_package = "./proto/agent";
 
-
+message LA {
+    double one = 1;
+    double five = 2;
+    double fifteen = 3;
+}
 
 message CPU {
     string model = 1;
@@ -24,7 +28,7 @@ message TopProc {
 
 message ServerStat {
     CPU cpu = 1;
-    string la = 2;
+    LA la = 2;
     TopProc top_proc = 3;
 }
 

@@ -114,9 +114,7 @@ func GetStat(ip string) (*agent.GetServerStatResponse, error) {
 	defer conn.Close()
 
 	c := agent.NewAgentClient(conn)
-	r := &agent.GetServerStatRequest{
-		Void: &agent.Void{},
-	}
+	r := &agent.GetServerStatRequest{}
 
 	resp, err := c.GetServerStat(context.Background(), r)
 	if err != nil {

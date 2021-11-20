@@ -1,39 +1,74 @@
 package stat
 
 import (
+	"bufio"
 	"bytes"
 	"io"
 	"log"
+	"os"
 	"os/exec"
+	"strconv"
+	"strings"
 
 	"github.com/nedostupno/zinaida/internal/models"
 )
 
-func GetLA() (string, error) {
-	cmd := exec.Command("uptime")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Run()
+type LA struct {
+	One     float64
+	Five    float64
+	Fifteen float64
+}
 
-	var l []string
-	var la string
-	var r byte = '\u000a'
-
-	for {
-
-		o, err := out.ReadString(r)
-		if err != nil {
-			if err == io.EOF {
-				break
-			} else {
-				log.Fatalln(err)
-			}
-		}
-		l = append(l, o)
+func GetLA() (*LA, error) {
+	la := new(LA)
+	fields, err := la.readLoadAvarageFile()
+	if err != nil {
+		return nil, err
 	}
 
-	la = l[0]
+	err = la.parseFields(fields)
+	if err != nil {
+		return nil, err
+	}
+
 	return la, nil
+}
+
+func (la *LA) readLoadAvarageFile() ([]string, error) {
+	file, err := os.ReadFile("/proc/loadavg")
+	if err != nil {
+		return nil, err
+	}
+
+	reader := bufio.NewReader(bytes.NewBuffer(file))
+
+	line, _, err := reader.ReadLine()
+	if err != nil {
+		return nil, err
+	}
+
+	fields := strings.Fields(string(line))
+	return fields, nil
+}
+
+func (la *LA) parseFields(fields []string) error {
+	var err error
+
+	la.One, err = strconv.ParseFloat(fields[0], 64)
+	if err != nil {
+		return err
+	}
+
+	la.Five, err = strconv.ParseFloat(fields[1], 64)
+	if err != nil {
+		return err
+	}
+
+	la.Fifteen, err = strconv.ParseFloat(fields[2], 64)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func GetCpuInfo() (models.CPU, error) {

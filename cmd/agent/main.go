@@ -91,7 +91,11 @@ func (s server) GetServerStat(ctx context.Context, r *agent.GetServerStatRequest
 				Min_MHz: cpu.Min_MHz,
 				Max_MXz: cpu.Max_MHz,
 			},
-			La: la,
+			La: &agent.LA{
+				One:     la.One,
+				Five:    la.Five,
+				Fifteen: la.Fifteen,
+			},
 			TopProc: &agent.TopProc{
 				FirstProc:  topProc.First,
 				SecondProc: topProc.Second,
