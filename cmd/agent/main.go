@@ -14,7 +14,9 @@ import (
 )
 
 func main() {
-	conn, err := grpc.Dial("localhost:22842", grpc.WithInsecure())
+	managerIP := os.Getenv("ZINAIDA_IP")
+
+	conn, err := grpc.Dial(managerIP+":22842", grpc.WithInsecure())
 	if err != nil {
 		log.Fatal(err)
 	}
