@@ -10,6 +10,17 @@ message LA {
     double fifteen = 3;
 }
 
+message Mem {
+    uint64 Total = 1;
+    uint64 Used = 2;
+    uint64 Free = 3;
+    uint64 Buffers = 4;
+    uint64 Cache = 5;
+    uint64 SwapTotal = 6;
+    uint64 SwapUsed = 7;
+    uint64 SwapFree = 8;
+}
+
 message CPU {
     string model = 1;
     string cpu_s = 2;
@@ -29,7 +40,8 @@ message TopProc {
 message ServerStat {
     CPU cpu = 1;
     LA la = 2;
-    TopProc top_proc = 3;
+    Mem mem = 3;
+    TopProc top_proc = 4;
 }
 
 // 

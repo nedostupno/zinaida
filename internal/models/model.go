@@ -24,16 +24,16 @@ type NodeAgent struct {
 }
 
 type CPU struct {
-	Model   string
-	Cpu_s   string
-	Min_MHz string
-	Max_MHz string
+	Model   string `json:"model,omitempty"`
+	Cpu_s   string `json:"cpu___s,omitempty"`
+	Min_MHz string `json:"min___m_hz,omitempty"`
+	Max_MHz string `json:"max___m_hz,omitempty"`
 }
 
 type TopProc struct {
-	First  string
-	Second string
-	Third  string
-	Fourth string
-	Fifth  string
+	First  string `json:"first,omitempty"`
+	Second string `json:"second,omitempty"`
+	Third  string `json:"third,omitempty"`
+	Fourth string `json:"fourth,omitempty"`
+	Fifth  string `json:"fifth,omitempty"`
 }

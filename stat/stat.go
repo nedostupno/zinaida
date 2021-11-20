@@ -14,9 +14,9 @@ import (
 )
 
 type LA struct {
-	One     float64
-	Five    float64
-	Fifteen float64
+	One     float64 `json:"one,omitempty"`
+	Five    float64 `json:"five,omitempty"`
+	Fifteen float64 `json:"fifteen,omitempty"`
 }
 
 func GetLA() (*LA, error) {
@@ -67,6 +67,78 @@ func (la *LA) parseFields(fields []string) error {
 	la.Fifteen, err = strconv.ParseFloat(fields[2], 64)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+type Mem struct {
+	Total     uint64 `json:"total,omitempty"`
+	Used      uint64 `json:"used,omitempty"`
+	Free      uint64 `json:"free,omitempty"`
+	Buffers   uint64 `json:"buffers,omitempty"`
+	Cache     uint64 `json:"cache,omitempty"`
+	SwapTotal uint64 `json:"swap_total,omitempty"`
+	SwapUsed  uint64 `json:"swap_used,omitempty"`
+	SwapFree  uint64 `json:"swap_free,omitempty"`
+}
+
+func GetMemInfo() (*Mem, error) {
+	mem := new(Mem)
+
+	file, err := os.Open("/proc/meminfo")
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	mem.parseStatFile(file)
+
+	return mem, nil
+}
+
+func (m *Mem) parseStatFile(file *os.File) error {
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		fields := strings.Fields(line)
+
+		err := m.parseFields(fields)
+		if err != nil {
+			return err
+		}
+	}
+
+	m.Used = m.Total - m.Free - m.Buffers - m.Cache
+	m.SwapUsed = m.SwapTotal - m.SwapFree
+
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *Mem) parseFields(fields []string) error {
+	fieldName := fields[0]
+
+	value, err := strconv.ParseUint(fields[1], 10, 64)
+	if err != nil {
+		return err
+	}
+
+	switch fieldName {
+	case "Buffers:":
+		m.Buffers = value
+	case "Cached:":
+		m.Cache = value
+	case "MemTotal:":
+		m.Total = value
+	case "MemFree:":
+		m.Free = value
+	case "SwapTotal:":
+		m.SwapTotal = value
+	case "SwapFree:":
+		m.SwapFree = value
 	}
 	return nil
 }

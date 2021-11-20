@@ -80,6 +80,11 @@ func (s server) GetServerStat(ctx context.Context, r *agent.GetServerStatRequest
 		return nil, err
 	}
 
+	mem, err := stat.GetMemInfo()
+	if err != nil {
+		return nil, err
+	}
+
 	topProc, err := stat.GetTopProc()
 	if err != nil {
 		return nil, err
@@ -97,6 +102,16 @@ func (s server) GetServerStat(ctx context.Context, r *agent.GetServerStatRequest
 				One:     la.One,
 				Five:    la.Five,
 				Fifteen: la.Fifteen,
+			},
+			Mem: &agent.Mem{
+				Total:     mem.Total,
+				Used:      mem.Used,
+				Free:      mem.Free,
+				Buffers:   mem.Buffers,
+				Cache:     mem.Cache,
+				SwapTotal: mem.SwapTotal,
+				SwapUsed:  mem.SwapUsed,
+				SwapFree:  mem.SwapFree,
 			},
 			TopProc: &agent.TopProc{
 				FirstProc:  topProc.First,
