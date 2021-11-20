@@ -70,7 +70,7 @@ func RunServer() {
 }
 
 func (s server) GetServerStat(ctx context.Context, r *agent.GetServerStatRequest) (*agent.GetServerStatResponse, error) {
-	cpu, err := stat.GetCpuInfo()
+	cpu, err := stat.GetCPUPercent()
 	if err != nil {
 		return nil, err
 	}
@@ -97,12 +97,6 @@ func (s server) GetServerStat(ctx context.Context, r *agent.GetServerStatRequest
 
 	response := &agent.GetServerStatResponse{
 		ServerStat: &agent.ServerStat{
-			Cpu: &agent.CPU{
-				Model:   cpu.Model,
-				CpuS:    cpu.Cpu_s,
-				Min_MHz: cpu.Min_MHz,
-				Max_MXz: cpu.Max_MHz,
-			},
 			La: &agent.LA{
 				One:     la.One,
 				Five:    la.Five,
@@ -117,6 +111,9 @@ func (s server) GetServerStat(ctx context.Context, r *agent.GetServerStatRequest
 				SwapTotal: mem.SwapTotal,
 				SwapUsed:  mem.SwapUsed,
 				SwapFree:  mem.SwapFree,
+			},
+			Cpu: &agent.CPU{
+				CPUPercent: make([]*agent.CPUPercent, 5),
 			},
 			Disk: &agent.Disk{
 				Total:      disk.Total,
@@ -135,5 +132,18 @@ func (s server) GetServerStat(ctx context.Context, r *agent.GetServerStatRequest
 		Err: "",
 	}
 
+	for i := 0; i < len(cpu); i++ {
+		response.ServerStat.Cpu.CPUPercent = append(response.ServerStat.Cpu.CPUPercent, &agent.CPUPercent{
+			CPU:     cpu[i].Cpu,
+			Usage:   cpu[i].Usage,
+			User:    cpu[i].User,
+			System:  cpu[i].System,
+			Nice:    cpu[i].Nice,
+			Idle:    cpu[i].Idle,
+			IOWait:  cpu[i].IOWait,
+			IRQ:     cpu[i].IRQ,
+			SoftIRQ: cpu[i].SoftIRQ,
+		})
+	}
 	return response, nil
 }

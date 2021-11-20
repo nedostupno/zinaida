@@ -22,10 +22,20 @@ message Mem {
 }
 
 message CPU {
-    string model = 1;
-    string cpu_s = 2;
-    string min_MHz = 3;
-    string max_MXz = 4;
+    repeated CPUPercent CPUPercent = 1;
+}
+
+message CPUPercent {
+    string CPU = 1;
+    double Usage = 2;
+    double User = 3;
+    double System = 4;
+    double Nice = 5;
+    double Idle = 6;
+    double IOWait = 7;
+    double IRQ = 8;
+    double SoftIRQ = 9;
+    double Steal = 10;
 }
 
 message Disk {
