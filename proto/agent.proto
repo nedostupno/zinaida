@@ -28,6 +28,12 @@ message CPU {
     string max_MXz = 4;
 }
 
+message Disk {
+    uint64 Total = 1;
+    uint64 Used = 2;
+    uint64 InodeTotal = 3;
+    uint64 InodesUsed = 4;
+}
 
 message TopProc {
     string first_proc = 1;
@@ -41,7 +47,8 @@ message ServerStat {
     CPU cpu = 1;
     LA la = 2;
     Mem mem = 3;
-    TopProc top_proc = 4;
+    Disk disk = 4;
+    TopProc top_proc = 5;
 }
 
 // 

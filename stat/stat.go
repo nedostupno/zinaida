@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/nedostupno/zinaida/internal/models"
+	"golang.org/x/sys/unix"
 )
 
 type LA struct {
@@ -141,6 +142,51 @@ func (m *Mem) parseFields(fields []string) error {
 		m.SwapFree = value
 	}
 	return nil
+}
+
+type Disk struct {
+	Total       uint64
+	Used        uint64
+	InodesTotal uint64
+	InodesUsed  uint64
+}
+
+func GetDiskInfo(path string) (*Disk, error) {
+	statfs := new(unix.Statfs_t)
+	err := unix.Statfs(path, statfs)
+	if err != nil {
+		return nil, err
+	}
+
+	// Blocks - общее количество блоков данных в файловой системе
+	//
+	// Bfree - количество свободных блоков на диске
+	//
+	// Bavail - количесвто свободных блоков доступных для не суперпользователей
+	//
+	// Files - сколько всего inode
+	//
+	// Ffree - сколько свободных inode
+	//
+	// Для понимания может помочь следущая иллюстрация:
+	//
+	//--------------------------------------------------------------------
+	//
+	// |<--------------------- Blocks ------------------------------->|
+	// 					|<---------------- Bfree ------------------->|
+	//
+	// ---------------------------------------------------------------
+	// | USED          | Bavail                | Reserved for root 	 |
+	// ---------------------------------------------------------------
+
+	d := new(Disk)
+	bsize := statfs.Bsize
+	d.Total = statfs.Blocks * uint64(bsize)
+	d.Used = (statfs.Blocks - statfs.Bfree) * uint64(bsize)
+	d.InodesTotal = statfs.Files
+	d.InodesUsed = statfs.Files - statfs.Ffree
+
+	return d, nil
 }
 
 func GetCpuInfo() (models.CPU, error) {

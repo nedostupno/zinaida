@@ -85,6 +85,11 @@ func (s server) GetServerStat(ctx context.Context, r *agent.GetServerStatRequest
 		return nil, err
 	}
 
+	disk, err := stat.GetDiskInfo("/")
+	if err != nil {
+		return nil, err
+	}
+
 	topProc, err := stat.GetTopProc()
 	if err != nil {
 		return nil, err
@@ -112,6 +117,12 @@ func (s server) GetServerStat(ctx context.Context, r *agent.GetServerStatRequest
 				SwapTotal: mem.SwapTotal,
 				SwapUsed:  mem.SwapUsed,
 				SwapFree:  mem.SwapFree,
+			},
+			Disk: &agent.Disk{
+				Total:      disk.Total,
+				Used:       disk.Used,
+				InodeTotal: disk.InodesTotal,
+				InodesUsed: disk.InodesUsed,
 			},
 			TopProc: &agent.TopProc{
 				FirstProc:  topProc.First,
