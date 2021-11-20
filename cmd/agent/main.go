@@ -52,7 +52,7 @@ type server struct {
 func RunServer() {
 	srv := grpc.NewServer()
 	port := 22843
-	ip := os.Getenv("AGENT_IP")
+	ip := os.Getenv("IP_AGENT")
 
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", ip, port))
 	if err != nil {
