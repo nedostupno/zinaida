@@ -113,7 +113,7 @@ func (s server) GetServerStat(ctx context.Context, r *agent.GetServerStatRequest
 				SwapFree:  mem.SwapFree,
 			},
 			Cpu: &agent.CPU{
-				CPUPercent: make([]*agent.CPUPercent, 5),
+				CPUPercent: []*agent.CPUPercent{},
 			},
 			Disk: &agent.Disk{
 				Total:      disk.Total,
@@ -122,11 +122,7 @@ func (s server) GetServerStat(ctx context.Context, r *agent.GetServerStatRequest
 				InodesUsed: disk.InodesUsed,
 			},
 			TopProc: &agent.TopProc{
-				FirstProc:  topProc.First,
-				SecondProc: topProc.Second,
-				ThirdProc:  topProc.Third,
-				FourthProc: topProc.Fourth,
-				FifthProc:  topProc.Fifth,
+				Process: []*agent.Process{},
 			},
 		},
 		Err: "",
@@ -143,6 +139,22 @@ func (s server) GetServerStat(ctx context.Context, r *agent.GetServerStatRequest
 			IOWait:  cpu[i].IOWait,
 			IRQ:     cpu[i].IRQ,
 			SoftIRQ: cpu[i].SoftIRQ,
+		})
+	}
+
+	for i := 0; i < len(topProc.Process); i++ {
+		response.ServerStat.TopProc.Process = append(response.ServerStat.TopProc.Process, &agent.Process{
+			User:    topProc.Process[i].User,
+			PID:     topProc.Process[i].PID,
+			CPU:     topProc.Process[i].CPU,
+			MEM:     topProc.Process[i].MEM,
+			VSZ:     topProc.Process[i].VSZ,
+			RSS:     topProc.Process[i].RSS,
+			TTY:     topProc.Process[i].TTY,
+			Stat:    topProc.Process[i].Stat,
+			Start:   topProc.Process[i].Start,
+			Time:    topProc.Process[i].Time,
+			Command: topProc.Process[i].Command,
 		})
 	}
 	return response, nil

@@ -46,11 +46,21 @@ message Disk {
 }
 
 message TopProc {
-    string first_proc = 1;
-    string second_proc = 2;
-    string third_proc = 3;
-    string fourth_proc = 4;
-    string fifth_proc = 5; 
+    repeated Process Process = 1;
+}
+
+message Process {
+    string User = 1;
+    uint64 PID = 2;
+    double CPU = 3;
+    double MEM = 4;
+    uint64 VSZ = 5;
+    uint64 RSS = 6;
+    string TTY = 7;
+    string Stat = 8;
+    string Start = 9;
+    string Time = 10;
+    string Command = 11;
 }
 
 message ServerStat {

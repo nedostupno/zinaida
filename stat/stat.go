@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nedostupno/zinaida/internal/models"
 	"golang.org/x/sys/unix"
 )
 
@@ -382,26 +381,61 @@ func calculateCPUPercent(t1, t2 []CPUStat) ([]CPUPercents, error) {
 	return percents, nil
 }
 
-func GetTopProc() (models.TopProc, error) {
+type TopProc struct {
+	Process []Process `json:"procs"`
+}
 
-	var topProc models.TopProc
+type Process struct {
+	User    string  `json:"user,omitempty"`
+	PID     uint64  `json:"pid,omitempty"`
+	CPU     float64 `json:"cpu,omitempty"`
+	MEM     float64 `json:"mem,omitempty"`
+	VSZ     uint64  `json:"vsz,omitempty"`
+	RSS     uint64  `json:"rss,omitempty"`
+	TTY     string  `json:"tty,omitempty"`
+	Stat    string  `json:"stat,omitempty"`
+	Start   string  `json:"start,omitempty"`
+	Time    string  `json:"time,omitempty"`
+	Command string  `json:"command,omitempty"`
+}
 
-	cmd1 := exec.Command("ps", "aux", "--sort", "-pcpu")
-	var out bytes.Buffer
-	cmd1.Stdout = &out
-	cmd1.Run()
+func GetTopProc() (*TopProc, error) {
 
-	cmd2 := exec.Command("head", "-5")
+	top := new(TopProc)
+
+	output, err := top.execPs()
+	if err != nil {
+		return nil, err
+	}
+
+	err = top.ParsePsOutput(output)
+	if err != nil {
+		return nil, err
+	}
+
+	return top, nil
+}
+
+func (t *TopProc) execPs() (*bytes.Buffer, error) {
+	ps := exec.Command("ps", "aux", "--sort", "-pcpu")
+	var stdout bytes.Buffer
+	ps.Stdout = &stdout
+	ps.Run()
+
+	head := exec.Command("head", "-6")
 	var output bytes.Buffer
-	cmd2.Stdin = &out
-	cmd2.Stdout = &output
-	cmd2.Run()
+	head.Stdin = &stdout
+	head.Stdout = &output
+	head.Run()
 
+	return &output, nil
+}
+
+func (t *TopProc) ParsePsOutput(output *bytes.Buffer) error {
 	var r byte = '\u000a'
 
-	var top []string
 	for {
-
+		p := Process{}
 		o, err := output.ReadString(r)
 		if err != nil {
 			if err == io.EOF {
@@ -410,14 +444,39 @@ func GetTopProc() (models.TopProc, error) {
 				log.Fatalln(err)
 			}
 		}
-		top = append(top, o)
+
+		fields := strings.Fields(o)
+		if fields[0] == "USER" {
+			continue
+		}
+		p.User = fields[0]
+		p.PID, err = strconv.ParseUint(fields[1], 10, 64)
+		if err != nil {
+			return err
+		}
+		p.CPU, err = strconv.ParseFloat(fields[2], 64)
+		if err != nil {
+			return err
+		}
+		p.MEM, err = strconv.ParseFloat(fields[3], 64)
+		if err != nil {
+			return err
+		}
+		p.VSZ, err = strconv.ParseUint(fields[4], 10, 64)
+		if err != nil {
+			return err
+		}
+		p.RSS, err = strconv.ParseUint(fields[5], 10, 64)
+		if err != nil {
+			return err
+		}
+		p.TTY = fields[6]
+		p.Stat = fields[7]
+		p.Start = fields[8]
+		p.Time = fields[9]
+		p.Command = fields[10]
+
+		t.Process = append(t.Process, p)
 	}
-
-	topProc.First = top[0]
-	topProc.Second = top[1]
-	topProc.Third = top[2]
-	topProc.Fourth = top[3]
-	topProc.Fifth = top[4]
-
-	return topProc, nil
+	return nil
 }
