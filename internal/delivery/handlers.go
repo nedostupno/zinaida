@@ -3,10 +3,12 @@ package delivery
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"github.com/nedostupno/zinaida/internal/auth"
 	"github.com/nedostupno/zinaida/internal/auth/utils"
 	"github.com/nedostupno/zinaida/internal/delivery/grpc"
@@ -14,30 +16,40 @@ import (
 	"github.com/nedostupno/zinaida/traceroute"
 )
 
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
 func GetMap(a *Api) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ips, err := a.Repo.GetAllNodesIP()
-		if err != nil {
-			m := utils.Message(false, err.Error())
-			utils.Respond(w, m)
-			return
-		}
-		fmt.Println(ips)
+		destinations := []string{}
 
-		traceMap, err := traceroute.Trace(ips)
-		if err != nil {
-			m := utils.Message(false, err.Error())
-			utils.Respond(w, m)
-			return
+		nodes, _ := a.Repo.ListAllNodes()
+		for _, node := range nodes {
+			if node.Domain != "" {
+				destinations = append(destinations, node.Domain)
+			} else {
+				destinations = append(destinations, node.Ip)
+			}
 		}
+		conn, _ := upgrader.Upgrade(w, r, nil)
+		defer conn.Close()
 
-		fmt.Println(traceMap)
-		jsnResp, err := json.Marshal(traceMap)
-		if err != nil {
-			m := utils.Message(false, err.Error())
-			utils.Respond(w, m)
+		hops := make(chan traceroute.Hop, 15)
+		go func() {
+			defer close(hops)
+			for i, domain := range destinations {
+				t := traceroute.NewTracer()
+				t.Traceroute(i, domain, hops)
+			}
+		}()
+
+		for hop := range hops {
+			if err := conn.WriteJSON(hop); err != nil {
+				log.Fatal(err)
+			}
 		}
-		w.Write([]byte(string(jsnResp)))
 	})
 }
 
