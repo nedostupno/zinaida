@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/nedostupno/zinaida/internal/auth"
@@ -205,4 +206,77 @@ func (a *Api) Login(w http.ResponseWriter, r *http.Request) {
 		utils.Respond(w, msg)
 		return
 	}
+}
+
+func (a *Api) Refresh(w http.ResponseWriter, r *http.Request) {
+
+	var refresh models.RefreshToken
+	err := json.NewDecoder(r.Body).Decode(&refresh)
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf("Переданы некорректные данные")))
+		return
+	}
+
+	if refresh.Token == "" {
+		w.Write([]byte(fmt.Sprintf("Пропущен токен аутентификации")))
+		return
+	}
+
+	claims := &auth.CustomClaims{}
+
+	token, err := jwt.ParseWithClaims(refresh.Token, claims, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte("Baka-sraka"), nil
+	})
+
+	// Ошибка будет выброшена даже в том случае, если токен истек, так что ручные проверки не требуются
+	if err != nil || !token.Valid {
+		w.Write([]byte(fmt.Sprintf("Некорректный токен аутентификации")))
+		return
+	}
+
+	exist, err := a.Repo.Users.IfExist(claims.Username)
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf("Не удалось проверить существование пользователя")))
+		return
+	}
+
+	if !exist {
+		w.Write([]byte(fmt.Sprintf("Некорректный токен аутентификации")))
+		return
+	}
+
+	oldRefreshToken, err := a.Repo.Users.GetRefreshToken(claims.Username)
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
+		return
+	}
+
+	if refresh.Token != oldRefreshToken {
+		w.Write([]byte(fmt.Sprintf("Некорректный токен аутентификации")))
+		return
+	}
+
+	newJwt, err := auth.GenerateJWTToken(claims.Username)
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
+		return
+	}
+
+	newRefresh, err := auth.GenerateRefreshToken(claims.Username)
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
+		return
+	}
+
+	_, err = a.Repo.Users.UpdateRefreshToken(claims.Username, newRefresh)
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
+		return
+	}
+
+	msg := utils.JWTMessage(newJwt, newRefresh)
+	utils.Respond(w, msg)
 }

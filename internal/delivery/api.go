@@ -24,6 +24,7 @@ func (a *Api) Init() {
 	router.HandleFunc("/api/nodes/{id:[0-9]+}/stat/", a.GetStat).Methods("GET")
 	router.HandleFunc("/api/nodes/{id:[0-9]+}/reboot/", a.RebootNode).Methods("GET")
 	router.HandleFunc("/api/login/", a.Login).Methods("POST")
+	router.HandleFunc("/api/refresh/", a.Refresh).Methods("POST")
 
 	router.Use(a.JwtAuthenticationMiddleware)
 	a.Router = router

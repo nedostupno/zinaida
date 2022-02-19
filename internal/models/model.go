@@ -7,6 +7,10 @@ type Token struct {
 	jwt.StandardClaims
 }
 
+type RefreshToken struct {
+	Token string `json:"token"`
+}
+
 type Account struct {
 	Password string `json:"password"`
 	Login    string `json:"login"`
