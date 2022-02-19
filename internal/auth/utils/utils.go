@@ -13,3 +13,7 @@ func Respond(w http.ResponseWriter, data map[string]interface{}) {
 	w.Header().Add("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(data)
 }
+
+func JWTMessage(jwt string, refresh string) map[string]interface{} {
+	return map[string]interface{}{"access_token": jwt, "refresh_token": refresh}
+}

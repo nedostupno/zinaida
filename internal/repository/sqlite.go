@@ -15,7 +15,8 @@ func NewSqliteDB() (*sql.DB, error) {
 	db.Exec(`CREATE TABLE if not exists Users (
 		id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, 
 		username TEXT,
-		password TEXT
+		password TEXT,
+		refresh_token TEXT
 	  )`)
 	db.Exec(`CREATE TABLE if not exists Nodes (
 		id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, 

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -160,30 +159,50 @@ func (a *Api) RebootNode(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *Api) Login(w http.ResponseWriter, r *http.Request) {
-	username := os.Getenv("LOGIN")
-	password := os.Getenv("PASSWORD")
-
-	fmt.Println(username, password, "sssssssssss")
 
 	var creds models.Credential
 
 	err := json.NewDecoder(r.Body).Decode(&creds)
 	if err != nil {
-		w.Write([]byte(fmt.Sprintf("Augh.... err in decode: %v", err)))
+		log.Println(err)
+		w.Write([]byte(fmt.Sprintf("Переданы некорреткные данные")))
 	}
 	defer r.Body.Close()
 
-	if creds.Username == username && creds.Password == password {
-		token, err := auth.GenerateJWTToken(username)
+	user, err := a.Repo.Users.Get(creds.Username)
+	if err != nil {
+		log.Println(err)
+		w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
+		log.Println(err)
+	}
+
+	if creds.Username == user.Username && creds.Password == user.Password {
+		jwt, err := auth.GenerateJWTToken(user.Username)
 		if err != nil {
-			w.Write([]byte(fmt.Sprintf("Augh.... err generateJWT: %+v", err)))
+
+			log.Println(err)
+			w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
+			return
 		}
 
-		msg := utils.Message(true, token)
+		refresh, err := auth.GenerateRefreshToken(user.Username)
+		if err != nil {
 
+			log.Println(err)
+			w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
+			return
+		}
+
+		_, err = a.Repo.Users.UpdateRefreshToken(user.Username, refresh)
+		if err != nil {
+
+			log.Println(err)
+			w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
+			return
+		}
+
+		msg := utils.JWTMessage(jwt, refresh)
 		utils.Respond(w, msg)
-	} else {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("Augh.... incorect login or password"))
+		return
 	}
 }
