@@ -15,7 +15,7 @@ func NewUsersLite(db *sql.DB) *UsersLite {
 	return &UsersLite{db: db}
 }
 
-func (u *UsersLite) IfExist(username string) (bool, error) {
+func (u *UsersLite) IsExist(username string) (bool, error) {
 	var isExist bool
 	err := u.db.QueryRow("SELECT exists (SELECT 1 FROM Users WHERE username == $1)", username).Scan(&isExist)
 	if err != nil {

@@ -171,7 +171,7 @@ func (a *Api) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	exist, err := a.Repo.Users.IfExist(creds.Username)
+	exist, err := a.Repo.Users.IsExist(creds.Username)
 	if err != nil {
 		w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
 		return
@@ -250,7 +250,7 @@ func (a *Api) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exist, err := a.Repo.Users.IfExist(claims.Username)
+	exist, err := a.Repo.Users.IsExist(claims.Username)
 	if err != nil {
 		w.Write([]byte(fmt.Sprintf("Не удалось проверить существование пользователя")))
 		return

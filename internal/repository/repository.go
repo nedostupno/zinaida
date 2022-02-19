@@ -7,7 +7,7 @@ import (
 )
 
 type Users interface {
-	IfExist(username string) (bool, error)
+	IsExist(username string) (bool, error)
 	Get(username string) (models.User, error)
 	GetRefreshToken(username string) (string, error)
 	UpdateRefreshToken(username string, token string) (sql.Result, error)
