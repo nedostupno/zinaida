@@ -167,14 +167,27 @@ func (a *Api) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 		w.Write([]byte(fmt.Sprintf("Переданы некорреткные данные")))
+		return
 	}
 	defer r.Body.Close()
+
+	exist, err := a.Repo.Users.IfExist(creds.Username)
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
+		return
+	}
+
+	if !exist {
+		w.Write([]byte(fmt.Sprintf("Переданы некорреткные данные")))
+		return
+	}
 
 	user, err := a.Repo.Users.Get(creds.Username)
 	if err != nil {
 		log.Println(err)
 		w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
 		log.Println(err)
+		return
 	}
 
 	if creds.Username == user.Username && creds.Password == user.Password {
