@@ -6,7 +6,6 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/nedostupno/zinaida/internal/auth"
 	"github.com/nedostupno/zinaida/internal/repository"
 )
 
@@ -26,7 +25,7 @@ func (a *Api) Init() {
 	router.HandleFunc("/api/nodes/{id:[0-9]+}/reboot/", a.RebootNode).Methods("GET")
 	router.HandleFunc("/api/login/", a.Login).Methods("POST")
 
-	router.Use(auth.JwtAuthentication)
+	router.Use(a.JwtAuthenticationMiddleware)
 	a.Router = router
 }
 

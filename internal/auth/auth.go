@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	"github.com/nedostupno/zinaida/internal/auth/utils"
 
 	"github.com/nedostupno/zinaida/internal/models"
