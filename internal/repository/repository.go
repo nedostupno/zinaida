@@ -6,7 +6,11 @@ import (
 	"github.com/nedostupno/zinaida/internal/models"
 )
 
-type User interface {
+type Users interface {
+	IfExist(username string) (bool, error)
+	Get(username string) (models.User, error)
+	GetRefreshToken(username string) (string, error)
+	UpdateRefreshToken(username string, token string) (sql.Result, error)
 }
 
 type Nodes interface {
@@ -21,13 +25,13 @@ type Nodes interface {
 }
 
 type Repository struct {
-	User
+	Users
 	Nodes
 }
 
 func NewRepository(db *sql.DB) *Repository {
 	return &Repository{
-		User:  NewUsersLite(db),
+		Users: NewUsersLite(db),
 		Nodes: NewNodesLite(db),
 	}
 }
