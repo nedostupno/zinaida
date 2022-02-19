@@ -37,3 +37,10 @@ type TopProc struct {
 	Fourth string `json:"fourth,omitempty"`
 	Fifth  string `json:"fifth,omitempty"`
 }
+
+type User struct {
+	Id            int
+	Username      string
+	Password      string
+	Refresh_token string
+}
