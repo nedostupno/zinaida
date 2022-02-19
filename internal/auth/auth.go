@@ -78,25 +78,41 @@ var JwtAuthentication = func(next http.Handler) http.Handler {
 	})
 }
 
-func GenerateJWT() (string, error) {
-	mySigningKey := []byte("shaka-waka")
+type CustomClaims struct {
+	Username string `json:"Username"`
+	jwt.StandardClaims
+}
 
-	type MyCustomClaims struct {
-		Username string `json:"Username"`
-		jwt.StandardClaims
-	}
+func GenerateJWTToken(u string) (string, error) {
+	signingKey := []byte("shaka-waka")
 
-	// Create the Claims
-	claims := MyCustomClaims{
-		"root",
-		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(10 * time.Minute).Unix(),
-			Issuer:    "root",
+	claims := CustomClaims{
+		Username: u,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(3 * time.Minute).Unix(),
+			IssuedAt:  time.Now().Unix(),
 		},
 	}
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	ss, err := token.SignedString(mySigningKey)
+	ss, err := token.SignedString(signingKey)
+	if err != nil {
+		return "", err
+	}
+	return ss, nil
+}
+
+func GenerateRefreshToken(u string) (string, error) {
+	signingKey := []byte("Baka-sraka")
+
+	claims := CustomClaims{
+		Username: u,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(2 * time.Minute).Unix(),
+			IssuedAt:  time.Now().Unix(),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	ss, err := token.SignedString(signingKey)
 	if err != nil {
 		return "", err
 	}

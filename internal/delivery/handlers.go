@@ -174,7 +174,7 @@ func (a *Api) Login(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	if creds.Username == username && creds.Password == password {
-		token, err := auth.GenerateJWT()
+		token, err := auth.GenerateJWTToken(username)
 		if err != nil {
 			w.Write([]byte(fmt.Sprintf("Augh.... err generateJWT: %+v", err)))
 		}
