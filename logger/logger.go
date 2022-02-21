@@ -1,9 +1,11 @@
 package logger
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"runtime"
 
 	"github.com/sirupsen/logrus"
 )
@@ -33,6 +35,15 @@ type Logger struct {
 }
 
 func (l *Logger) WithErrorFields(r *http.Request, err error) *logrus.Entry {
+	// Получаем фрейм функции из которой был произведен вызов метода WithErrorFields
+	// Для того, чтобы получить нужный нам фрейм, необходимо пропустить два первых фрейма,
+	// Это связано с тем, что первый фрейм это вызов runtime.Callers,
+	// А второй фрейм принадлежит вызову logger.WithErrorFields
+	pc := make([]uintptr, 15)
+	n := runtime.Callers(2, pc)
+	frames := runtime.CallersFrames(pc[:n])
+	frame, _ := frames.Next()
+
 	return l.WithFields(logrus.Fields{
 		"Method":     r.Method,
 		"Proto":      r.Proto,
@@ -40,6 +51,8 @@ func (l *Logger) WithErrorFields(r *http.Request, err error) *logrus.Entry {
 		"RequestURI": r.RequestURI,
 		"UserAgent":  r.UserAgent(),
 		"Referer":    r.Referer(),
+		"file":       fmt.Sprintf("%s:%d", frame.File, frame.Line),
+		"func":       frame.Function,
 		"Error":      err,
 	})
 }
