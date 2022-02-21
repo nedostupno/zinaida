@@ -2,16 +2,16 @@ package delivery
 
 import (
 	"net/http"
-	"os"
 
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/nedostupno/zinaida/internal/repository"
+	"github.com/nedostupno/zinaida/logger"
 )
 
 type Api struct {
 	Router *mux.Router
 	Repo   *repository.Repository
+	Logger *logger.Logger
 }
 
 func (a *Api) Init() {
@@ -26,10 +26,12 @@ func (a *Api) Init() {
 	router.HandleFunc("/api/login/", a.Login).Methods("POST")
 	router.HandleFunc("/api/refresh/", a.Refresh).Methods("POST")
 
-	router.Use(a.JwtAuthenticationMiddleware)
 	a.Router = router
+	a.Logger = logger.GetLogger()
+
+	router.Use(a.LoggingMidleware, a.JwtAuthenticationMiddleware)
 }
 
 func (a *Api) Run(addr string) {
-	http.ListenAndServe(addr, handlers.CombinedLoggingHandler(os.Stdout, a.Router))
+	http.ListenAndServe(addr, a.Router)
 }

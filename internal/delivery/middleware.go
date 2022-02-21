@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/nedostupno/zinaida/internal/auth"
+	"github.com/sirupsen/logrus"
 )
 
 func (a *Api) JwtAuthenticationMiddleware(h http.Handler) http.Handler {
@@ -48,5 +50,67 @@ func (a *Api) JwtAuthenticationMiddleware(h http.Handler) http.Handler {
 		}
 
 		h.ServeHTTP(w, r)
+	})
+}
+
+type (
+	responseData struct {
+		status int
+		size   int
+	}
+
+	loggingResponseWriter struct {
+		http.ResponseWriter
+		responseData *responseData
+	}
+)
+
+func (r *loggingResponseWriter) Write(b []byte) (int, error) {
+	size, err := r.ResponseWriter.Write(b)
+	r.responseData.size += size
+	return size, err
+}
+
+func (r *loggingResponseWriter) WriteHeader(statusCode int) {
+	r.ResponseWriter.WriteHeader(statusCode)
+	r.responseData.status = statusCode
+}
+
+func (a *Api) LoggingMidleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		responseData := &responseData{
+			status: 0,
+			size:   0,
+		}
+		lrw := loggingResponseWriter{
+			ResponseWriter: w,
+			responseData:   responseData,
+		}
+
+		h.ServeHTTP(&lrw, r)
+
+		duration := time.Since(start)
+		if responseData.status >= 400 {
+			a.Logger.WithFields(logrus.Fields{
+				"Success":  false,
+				"URI":      r.RequestURI,
+				"Method":   r.Method,
+				"Status":   responseData.status,
+				"Duration": duration,
+				"Size":     responseData.size,
+			}).Info()
+			return
+		}
+
+		a.Logger.WithFields(logrus.Fields{
+			"Success":  true,
+			"URI":      r.RequestURI,
+			"Method":   r.Method,
+			"Status":   responseData.status,
+			"Duration": duration,
+			"Size":     responseData.size,
+		}).Info()
 	})
 }
