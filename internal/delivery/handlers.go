@@ -16,6 +16,18 @@ import (
 	"github.com/nedostupno/zinaida/traceroute"
 )
 
+type APIError struct {
+	Msg string `json:"error"`
+}
+
+func JsonError(w http.ResponseWriter, msg string, code int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(code)
+	err := APIError{Msg: msg}
+	json.NewEncoder(w).Encode(err)
+}
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
