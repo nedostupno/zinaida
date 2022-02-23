@@ -178,7 +178,7 @@ func (a *Api) Login(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&creds)
 	if err != nil {
 		a.Logger.WithErrorFields(r, err).Error("не удалось декодировать структуру r.Body")
-		w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 	defer r.Body.Close()
@@ -186,19 +186,19 @@ func (a *Api) Login(w http.ResponseWriter, r *http.Request) {
 	exist, err := a.Repo.Users.IsExist(creds.Username)
 	if err != nil {
 		a.Logger.WithErrorFields(r, err).Error(fmt.Sprintf("не удалось проверить существование пользователя %s в базе данных", creds.Username))
-		w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 
 	if !exist {
-		w.Write([]byte(fmt.Sprintf("Переданы некорреткные данные")))
+		JsonError(w, "Переданы некорреткные данные", http.StatusUnauthorized)
 		return
 	}
 
 	user, err := a.Repo.Users.Get(creds.Username)
 	if err != nil {
 		a.Logger.WithErrorFields(r, err).Error(fmt.Sprintf("не удалось получить пользователя %s из базы данных", creds.Username))
-		w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		log.Println(err)
 		return
 	}
@@ -207,21 +207,21 @@ func (a *Api) Login(w http.ResponseWriter, r *http.Request) {
 		jwt, err := auth.GenerateJWTToken(user.Username)
 		if err != nil {
 			a.Logger.WithErrorFields(r, err).Error(fmt.Sprintf("не удалось сгенерировать JWT access токен для пользователя %s", user.Username))
-			w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
+			JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 			return
 		}
 
 		refresh, err := auth.GenerateRefreshToken(user.Username)
 		if err != nil {
 			a.Logger.WithErrorFields(r, err).Error(fmt.Sprintf("не удалось сгенерировать JWT refresh токен для пользователя %s", user.Username))
-			w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
+			JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 			return
 		}
 
 		_, err = a.Repo.Users.UpdateRefreshToken(user.Username, refresh)
 		if err != nil {
 			a.Logger.WithErrorFields(r, err).Error(fmt.Errorf("не удалось обновить JWT refresh токен в базе для пользователя %s", user.Username))
-			w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
+			JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 			return
 		}
 
@@ -229,7 +229,7 @@ func (a *Api) Login(w http.ResponseWriter, r *http.Request) {
 		utils.Respond(w, msg)
 		return
 	}
-	w.Write([]byte(fmt.Sprintf("Переданы некорреткные данные")))
+	JsonError(w, "Переданы некорреткные данные", http.StatusUnauthorized)
 }
 
 func (a *Api) Refresh(w http.ResponseWriter, r *http.Request) {
