@@ -162,20 +162,26 @@ func (a *Api) DeleteNode(w http.ResponseWriter, r *http.Request) {
 func (a *Api) GetStat(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
+
+	//TODO: добавить проверку существования ноды с переданным id в базе данных
 	node, err := a.Repo.GetNodeByID(id)
 	if err != nil {
-		m := utils.Message(false, err.Error())
-		utils.Respond(w, m)
+		a.Logger.WithErrorFields(r, err).Errorf("не удалось получить ноду с id %s из базы данных", id)
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+		return
 	}
+	//TODO: Добавить gRPC ping, чтобы проверять запущена ли нода агент и не падать с ошибкой
 	resp, err := grpc.GetStat(node.Ip)
 	if err != nil {
-		m := utils.Message(false, err.Error())
-		utils.Respond(w, m)
+		a.Logger.WithErrorFields(r, err).Errorf("не удалось получить статистику по grpc о ноде %v", node)
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+		return
 	}
 	jsnResp, err := json.Marshal(resp)
 	if err != nil {
-		m := utils.Message(false, err.Error())
-		utils.Respond(w, m)
+		a.Logger.WithErrorFields(r, err).Errorf("не удалось замаршалить структуру resp %v в json", resp)
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+		return
 	}
 	w.Write([]byte(string(jsnResp)))
 }
