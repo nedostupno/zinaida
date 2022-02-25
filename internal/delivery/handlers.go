@@ -73,7 +73,7 @@ func (a *Api) GetNodes(w http.ResponseWriter, r *http.Request) {
 	}
 	jsnResp, err := json.Marshal(nodes)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Error("Не удалось замаршалить структуру models.NodeAgent в json-объект")
+		a.Logger.WithErrorFields(r, err).Errorf("Не удалось замаршалить []models.NodeAgent %v в json-объект", nodes)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
@@ -99,14 +99,14 @@ func (a *Api) CreateNode(w http.ResponseWriter, r *http.Request) {
 	// и если определить ip не удастся, то ноду в базу данных не добавляем
 	_, err := a.Repo.AddNode(n.Ip, n.Domain)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Error("не удалось добавить ноду %v в мониторинг", n)
+		a.Logger.WithErrorFields(r, err).Errorf("не удалось добавить ноду %v в мониторинг", n)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 
 	node, err := a.Repo.GetNodeByIP(n.Ip)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Error("не удалось получить ноду с ip %s из базы данных", n.Ip)
+		a.Logger.WithErrorFields(r, err).Errorf("не удалось получить ноду с ip %s из базы данных", n.Ip)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
