@@ -199,7 +199,6 @@ func (a *Api) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		a.Logger.WithErrorFields(r, err).Error(fmt.Sprintf("не удалось получить пользователя %s из базы данных", creds.Username))
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
-		log.Println(err)
 		return
 	}
 
@@ -237,12 +236,13 @@ func (a *Api) Refresh(w http.ResponseWriter, r *http.Request) {
 	var refresh models.RefreshToken
 	err := json.NewDecoder(r.Body).Decode(&refresh)
 	if err != nil {
-		w.Write([]byte(fmt.Sprintf("Переданы некорректные данные")))
+		a.Logger.WithErrorFields(r, err).Error("не удалось декодировать структуру r.Body")
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 
 	if refresh.Token == "" {
-		w.Write([]byte(fmt.Sprintf("Пропущен токен аутентификации")))
+		JsonError(w, "Пропущен refresh токен", http.StatusUnauthorized)
 		return
 	}
 
@@ -257,47 +257,52 @@ func (a *Api) Refresh(w http.ResponseWriter, r *http.Request) {
 
 	// Ошибка будет выброшена даже в том случае, если токен истек, так что ручные проверки не требуются
 	if err != nil || !token.Valid {
-		w.Write([]byte(fmt.Sprintf("Некорректный токен аутентификации")))
+		JsonError(w, "Невалидный refresh токен", http.StatusUnauthorized)
 		return
 	}
 
 	exist, err := a.Repo.Users.IsExist(claims.Username)
 	if err != nil {
-		w.Write([]byte(fmt.Sprintf("Не удалось проверить существование пользователя")))
+		a.Logger.WithErrorFields(r, err).Error(fmt.Sprintf("не удалось проверить существование пользователя %s в базе данных", claims.Username))
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 
 	if !exist {
-		w.Write([]byte(fmt.Sprintf("Некорректный токен аутентификации")))
+		JsonError(w, "Невалидный refresh токен", http.StatusUnauthorized)
 		return
 	}
 
 	oldRefreshToken, err := a.Repo.Users.GetRefreshToken(claims.Username)
 	if err != nil {
-		w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
+		a.Logger.WithErrorFields(r, err).Error(fmt.Sprintf("не удалось получить refresh токен для пользователя %s из базы данных", claims.Username))
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 
 	if refresh.Token != oldRefreshToken {
-		w.Write([]byte(fmt.Sprintf("Некорректный токен аутентификации")))
+		JsonError(w, "Невалидный refrsh токен", http.StatusUnauthorized)
 		return
 	}
 
 	newJwt, err := auth.GenerateJWTToken(claims.Username)
 	if err != nil {
-		w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
+		a.Logger.WithErrorFields(r, err).Error(fmt.Sprintf("не удалось сгенерировать JWT access токен для пользователя %s", claims.Username))
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 
 	newRefresh, err := auth.GenerateRefreshToken(claims.Username)
 	if err != nil {
-		w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
+		a.Logger.WithErrorFields(r, err).Error(fmt.Sprintf("не удалось сгенерировать JWT refresh токен для пользователя %s", claims.Username))
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 
 	_, err = a.Repo.Users.UpdateRefreshToken(claims.Username, newRefresh)
 	if err != nil {
-		w.Write([]byte(fmt.Sprintf("Произошла непредвиденная ошибка")))
+		a.Logger.WithErrorFields(r, err).Error(fmt.Sprintf("не удалось обновить JWT refresh в базе токен для пользователя %s", claims.Username))
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 
