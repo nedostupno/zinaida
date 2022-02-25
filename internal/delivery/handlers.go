@@ -140,10 +140,12 @@ func (a *Api) DeleteNode(w http.ResponseWriter, r *http.Request) {
 
 	ifExist, err := a.Repo.Nodes.CheckNodeExistenceByID(id)
 	if err != nil {
-		m := utils.Message(false, err.Error())
-		utils.Respond(w, m)
+		a.Logger.WithErrorFields(r, err).Errorf("не удалось проверить наличие ноды с id %s в базе данных", id)
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+		return
 	}
 
+	// TODO: Заменить блок if-else на if !
 	if ifExist {
 		_, err = a.Repo.DeleteNode(id)
 		if err != nil {
