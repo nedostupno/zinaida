@@ -118,15 +118,18 @@ func (a *Api) GetNodeInfo(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
+	//TODO: Добавить проверку существования ноды с указанным id
 	node, err := a.Repo.GetNodeByID(id)
 	if err != nil {
-		m := utils.Message(false, err.Error())
-		utils.Respond(w, m)
+		a.Logger.WithErrorFields(r, err).Errorf("не удалось получить ноду с id %s из базы данных", id)
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+		return
 	}
 	jsnResp, err := json.Marshal(node)
 	if err != nil {
-		m := utils.Message(false, err.Error())
-		utils.Respond(w, m)
+		a.Logger.WithErrorFields(r, err).Errorf("Не удалось замаршалить структуру models.NodeAgent %v в json-объект", node)
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+		return
 	}
 	w.Write([]byte(string(jsnResp)))
 }
