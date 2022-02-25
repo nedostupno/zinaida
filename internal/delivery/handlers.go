@@ -67,14 +67,14 @@ func (a *Api) GetMap(w http.ResponseWriter, r *http.Request) {
 func (a *Api) GetNodes(w http.ResponseWriter, r *http.Request) {
 	nodes, err := a.Repo.ListAllNodes()
 	if err != nil {
-		m := utils.Message(false, err.Error())
-		utils.Respond(w, m)
+		a.Logger.WithErrorFields(r, err).Error("Не удалось получить список всех нод, находящихся в мониторинге, из базы данных")
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 	jsnResp, err := json.Marshal(nodes)
 	if err != nil {
-		m := utils.Message(false, err.Error())
-		utils.Respond(w, m)
+		a.Logger.WithErrorFields(r, err).Error("Не удалось замаршалить структуру models.NodeAgent в json-объект")
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 	}
 	w.Write([]byte(string(jsnResp)))
 }
