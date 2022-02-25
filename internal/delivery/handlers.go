@@ -75,6 +75,7 @@ func (a *Api) GetNodes(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		a.Logger.WithErrorFields(r, err).Error("Не удалось замаршалить структуру models.NodeAgent в json-объект")
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+		return
 	}
 	w.Write([]byte(string(jsnResp)))
 }
@@ -83,27 +84,34 @@ func (a *Api) CreateNode(w http.ResponseWriter, r *http.Request) {
 	var n models.NodeAgent
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&n); err != nil {
-		m := utils.Message(false, "Incorrect request data")
-		utils.Respond(w, m)
+		a.Logger.WithErrorFields(r, err).Error("не удалось декодировать структуру r.Body")
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 	defer r.Body.Close()
 
+	if n.Domain == "" && n.Ip == "" {
+		JsonError(w, "Переданы некорректные данные", http.StatusBadRequest)
+		return
+	}
+
+	// TODO: если передан пустой ip, то необходимо по домену определить ip адрес,
+	// и если определить ip не удастся, то ноду в базу данных не добавляем
 	_, err := a.Repo.AddNode(n.Ip, n.Domain)
 	if err != nil {
-		m := utils.Message(false, err.Error())
-		utils.Respond(w, m)
+		a.Logger.WithErrorFields(r, err).Error("не удалось добавить ноду %v в мониторинг", n)
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 
 	node, err := a.Repo.GetNodeByIP(n.Ip)
 	if err != nil {
-		m := utils.Message(false, err.Error())
-		utils.Respond(w, m)
+		a.Logger.WithErrorFields(r, err).Error("не удалось получить ноду с ip %s из базы данных", n.Ip)
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+		return
 	}
 
 	w.Write([]byte(fmt.Sprintf("НодаАгент успешно зарегистрирована: %v", node)))
-
 }
 
 func (a *Api) GetNodeInfo(w http.ResponseWriter, r *http.Request) {
