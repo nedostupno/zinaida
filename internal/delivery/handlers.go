@@ -3,7 +3,6 @@ package delivery
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/golang-jwt/jwt"
@@ -36,7 +35,8 @@ var upgrader = websocket.Upgrader{
 func (a *Api) GetMap(w http.ResponseWriter, r *http.Request) {
 	destinations := []string{}
 
-	nodes, _ := a.Repo.ListAllNodes()
+	// TODO: Проверять содержится ли хоть один элемент в nodes
+	nodes, err := a.Repo.ListAllNodes()
 	for _, node := range nodes {
 		if node.Domain != "" {
 			destinations = append(destinations, node.Domain)
@@ -44,6 +44,12 @@ func (a *Api) GetMap(w http.ResponseWriter, r *http.Request) {
 			destinations = append(destinations, node.Ip)
 		}
 	}
+	if err != nil {
+		a.Logger.WithErrorFields(r, err).Error("Не удалось получить список всех нод, находящихся в мониторинге, из базы данных")
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+		return
+	}
+
 	conn, _ := upgrader.Upgrade(w, r, nil)
 	defer conn.Close()
 
@@ -52,16 +58,22 @@ func (a *Api) GetMap(w http.ResponseWriter, r *http.Request) {
 		defer close(hops)
 		for i, domain := range destinations {
 			t := traceroute.NewTracer()
-			t.Traceroute(i, domain, hops)
+			err := t.Traceroute(i, domain, hops)
+			if err != nil {
+				a.Logger.WithErrorFields(r, err).Errorf("Не удалось построить трассировку до ноды %v", domain)
+				JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+				return
+			}
 		}
 	}()
 
 	for hop := range hops {
 		if err := conn.WriteJSON(hop); err != nil {
-			log.Fatal(err)
+			a.Logger.WithErrorFields(r, err).Errorf("Не удалось замаршалить в json и отпарвить клиенту хоп: %v", hop)
+			JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+			return
 		}
 	}
-
 }
 
 func (a *Api) GetNodes(w http.ResponseWriter, r *http.Request) {
