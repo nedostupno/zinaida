@@ -8,13 +8,15 @@ import (
 	"os"
 
 	"github.com/nedostupno/zinaida/internal/repository"
+	"github.com/nedostupno/zinaida/logger"
 	"github.com/nedostupno/zinaida/proto/agent"
 	"github.com/nedostupno/zinaida/proto/manager"
 	"google.golang.org/grpc"
 )
 
 type server struct {
-	repo *repository.Repository
+	repo   *repository.Repository
+	logger *logger.Logger
 	manager.UnimplementedManagerServer
 }
 
@@ -97,6 +99,7 @@ func RunServer(repo *repository.Repository) {
 	}
 
 	var s server
+	s.logger = logger.GetLogger()
 	s.repo = repo
 	manager.RegisterManagerServer(srv, s)
 
