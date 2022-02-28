@@ -25,13 +25,13 @@ func (a *Api) JwtAuthenticationMiddleware(h http.Handler) http.Handler {
 
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			w.Write([]byte(fmt.Sprintf("Не предоставлен токен аутентификатции")))
+			JsonError(w, "Пропущен токен аутентификации", http.StatusUnauthorized)
 			return
 		}
 
 		splittedHeader := strings.Split(authHeader, " ")
 		if len(splittedHeader) != 2 || splittedHeader[0] != "Bearer" {
-			w.Write([]byte(fmt.Sprintf("Некорректный токен аутентификации")))
+			JsonError(w, "Невалидный токен аутентификации", http.StatusUnauthorized)
 			return
 		}
 
@@ -45,7 +45,7 @@ func (a *Api) JwtAuthenticationMiddleware(h http.Handler) http.Handler {
 		})
 
 		if err != nil || !token.Valid {
-			w.Write([]byte(fmt.Sprintf("Некорректный токен аутентификации")))
+			JsonError(w, "Невалидный токен аутентификации", http.StatusUnauthorized)
 			return
 		}
 

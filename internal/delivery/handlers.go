@@ -199,6 +199,7 @@ func (a *Api) GetStat(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *Api) RebootNode(w http.ResponseWriter, r *http.Request) {
+	// TODO: Реализовать перезагрузку ноды-агента
 	w.Write([]byte("Handler RebootNode not implemented"))
 }
 
