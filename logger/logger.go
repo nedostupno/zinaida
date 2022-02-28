@@ -57,6 +57,19 @@ func (l *Logger) WithRestApiErrorFields(r *http.Request, err error) *logrus.Entr
 	})
 }
 
+func (l *Logger) WhithErrorFields(err error) *logrus.Entry {
+	pc := make([]uintptr, 15)
+	n := runtime.Callers(2, pc)
+	frames := runtime.CallersFrames(pc[:n])
+	frame, _ := frames.Next()
+
+	return l.WithFields(logrus.Fields{
+		"file":  fmt.Sprintf("%s:%d", frame.File, frame.Line),
+		"func":  frame.Function,
+		"Error": err,
+	})
+}
+
 func GetLogger() *Logger {
 	log := logrus.New()
 
