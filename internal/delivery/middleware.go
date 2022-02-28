@@ -11,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (a *Api) JwtAuthenticationMiddleware(h http.Handler) http.Handler {
+func (a *api) JwtAuthenticationMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		notAuth := []string{"/api/login/", "/api/refresh/"}
 		requestPath := r.URL.Path
@@ -76,7 +76,7 @@ func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 	r.responseData.status = statusCode
 }
 
-func (a *Api) LoggingMidleware(h http.Handler) http.Handler {
+func (a *api) LoggingMidleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
@@ -93,7 +93,7 @@ func (a *Api) LoggingMidleware(h http.Handler) http.Handler {
 
 		duration := time.Since(start)
 		if responseData.status >= 400 {
-			a.Logger.WithFields(logrus.Fields{
+			a.logger.WithFields(logrus.Fields{
 				"Success":  false,
 				"URI":      r.RequestURI,
 				"Method":   r.Method,
@@ -104,7 +104,7 @@ func (a *Api) LoggingMidleware(h http.Handler) http.Handler {
 			return
 		}
 
-		a.Logger.WithFields(logrus.Fields{
+		a.logger.WithFields(logrus.Fields{
 			"Success":  true,
 			"URI":      r.RequestURI,
 			"Method":   r.Method,

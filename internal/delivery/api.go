@@ -8,14 +8,13 @@ import (
 	"github.com/nedostupno/zinaida/logger"
 )
 
-// TODO: сделать поля структуры недоступными из других пакетов напрямую
-type Api struct {
-	Router *mux.Router
-	Repo   *repository.Repository
-	Logger *logger.Logger
+type api struct {
+	router *mux.Router
+	repo   *repository.Repository
+	logger *logger.Logger
 }
 
-func (a *Api) InitRouter() {
+func (a *api) InitRouter() {
 	router := mux.NewRouter()
 	router.HandleFunc("/api/map/", a.GetMap).Methods("GET")
 	router.HandleFunc("/api/nodes/", a.GetNodes).Methods("GET")
@@ -27,20 +26,20 @@ func (a *Api) InitRouter() {
 	router.HandleFunc("/api/login/", a.Login).Methods("POST")
 	router.HandleFunc("/api/refresh/", a.Refresh).Methods("POST")
 
-	a.Router = router
+	a.router = router
 
 	router.Use(a.LoggingMidleware, a.JwtAuthenticationMiddleware)
 }
 
-func (a *Api) Run(addr string) {
+func (a *api) Run(addr string) {
 	//TODO: обработать ошибку
-	http.ListenAndServe(addr, a.Router)
+	http.ListenAndServe(addr, a.router)
 }
 
-func GetApi(repo *repository.Repository, log *logger.Logger) *Api {
-	return &Api{
-		Router: &mux.Router{},
-		Repo:   repo,
-		Logger: log,
+func GetApi(repo *repository.Repository, log *logger.Logger) *api {
+	return &api{
+		router: &mux.Router{},
+		repo:   repo,
+		logger: log,
 	}
 }
