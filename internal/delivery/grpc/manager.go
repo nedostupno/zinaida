@@ -3,7 +3,6 @@ package grpc
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"os"
 
@@ -88,7 +87,7 @@ func (s server) Registrate(ctx context.Context, r *manager.RegistrateRequest) (*
 	return resp, nil
 }
 
-func RunServer(repo *repository.Repository) {
+func RunServer(repo *repository.Repository, log *logger.Logger) {
 	srv := grpc.NewServer()
 	port := 22842
 	ip := os.Getenv("ZINAIDA_IP")
@@ -99,7 +98,7 @@ func RunServer(repo *repository.Repository) {
 	}
 
 	var s server
-	s.logger = logger.GetLogger()
+	s.logger = log
 	s.repo = repo
 	manager.RegisterManagerServer(srv, s)
 
@@ -112,7 +111,7 @@ func GetStat(ip string) (*agent.GetServerStatResponse, error) {
 
 	conn, err := grpc.Dial(fmt.Sprintf("%v:22843", ip), grpc.WithInsecure())
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	defer conn.Close()
 
@@ -121,7 +120,7 @@ func GetStat(ip string) (*agent.GetServerStatResponse, error) {
 
 	resp, err := c.GetServerStat(context.Background(), r)
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
 	return resp, nil
 
