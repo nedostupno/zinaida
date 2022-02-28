@@ -45,7 +45,7 @@ func (a *Api) GetMap(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Error("Не удалось получить список всех нод, находящихся в мониторинге, из базы данных")
+		a.Logger.WithRestApiErrorFields(r, err).Error("Не удалось получить список всех нод, находящихся в мониторинге, из базы данных")
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
@@ -60,7 +60,7 @@ func (a *Api) GetMap(w http.ResponseWriter, r *http.Request) {
 			t := traceroute.NewTracer()
 			err := t.Traceroute(i, domain, hops)
 			if err != nil {
-				a.Logger.WithErrorFields(r, err).Errorf("Не удалось построить трассировку до ноды %v", domain)
+				a.Logger.WithRestApiErrorFields(r, err).Errorf("Не удалось построить трассировку до ноды %v", domain)
 				JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 				return
 			}
@@ -69,7 +69,7 @@ func (a *Api) GetMap(w http.ResponseWriter, r *http.Request) {
 
 	for hop := range hops {
 		if err := conn.WriteJSON(hop); err != nil {
-			a.Logger.WithErrorFields(r, err).Errorf("Не удалось замаршалить в json и отпарвить клиенту хоп: %v", hop)
+			a.Logger.WithRestApiErrorFields(r, err).Errorf("Не удалось замаршалить в json и отпарвить клиенту хоп: %v", hop)
 			JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 			return
 		}
@@ -79,13 +79,13 @@ func (a *Api) GetMap(w http.ResponseWriter, r *http.Request) {
 func (a *Api) GetNodes(w http.ResponseWriter, r *http.Request) {
 	nodes, err := a.Repo.ListAllNodes()
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Error("Не удалось получить список всех нод, находящихся в мониторинге, из базы данных")
+		a.Logger.WithRestApiErrorFields(r, err).Error("Не удалось получить список всех нод, находящихся в мониторинге, из базы данных")
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 	jsnResp, err := json.Marshal(nodes)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Errorf("Не удалось замаршалить []models.NodeAgent %v в json-объект", nodes)
+		a.Logger.WithRestApiErrorFields(r, err).Errorf("Не удалось замаршалить []models.NodeAgent %v в json-объект", nodes)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
@@ -96,7 +96,7 @@ func (a *Api) CreateNode(w http.ResponseWriter, r *http.Request) {
 	var n models.NodeAgent
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&n); err != nil {
-		a.Logger.WithErrorFields(r, err).Error("не удалось декодировать структуру r.Body")
+		a.Logger.WithRestApiErrorFields(r, err).Error("не удалось декодировать структуру r.Body")
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
@@ -111,14 +111,14 @@ func (a *Api) CreateNode(w http.ResponseWriter, r *http.Request) {
 	// и если определить ip не удастся, то ноду в базу данных не добавляем
 	_, err := a.Repo.AddNode(n.Ip, n.Domain)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Errorf("не удалось добавить ноду %v в мониторинг", n)
+		a.Logger.WithRestApiErrorFields(r, err).Errorf("не удалось добавить ноду %v в мониторинг", n)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 
 	node, err := a.Repo.GetNodeByIP(n.Ip)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Errorf("не удалось получить ноду с ip %s из базы данных", n.Ip)
+		a.Logger.WithRestApiErrorFields(r, err).Errorf("не удалось получить ноду с ip %s из базы данных", n.Ip)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
@@ -133,13 +133,13 @@ func (a *Api) GetNodeInfo(w http.ResponseWriter, r *http.Request) {
 	//TODO: Добавить проверку существования ноды с указанным id
 	node, err := a.Repo.GetNodeByID(id)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Errorf("не удалось получить ноду с id %s из базы данных", id)
+		a.Logger.WithRestApiErrorFields(r, err).Errorf("не удалось получить ноду с id %s из базы данных", id)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 	jsnResp, err := json.Marshal(node)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Errorf("Не удалось замаршалить структуру models.NodeAgent %v в json-объект", node)
+		a.Logger.WithRestApiErrorFields(r, err).Errorf("Не удалось замаршалить структуру models.NodeAgent %v в json-объект", node)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
@@ -152,7 +152,7 @@ func (a *Api) DeleteNode(w http.ResponseWriter, r *http.Request) {
 
 	ifExist, err := a.Repo.Nodes.CheckNodeExistenceByID(id)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Errorf("не удалось проверить наличие ноды с id %s в базе данных", id)
+		a.Logger.WithRestApiErrorFields(r, err).Errorf("не удалось проверить наличие ноды с id %s в базе данных", id)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
@@ -178,20 +178,20 @@ func (a *Api) GetStat(w http.ResponseWriter, r *http.Request) {
 	//TODO: добавить проверку существования ноды с переданным id в базе данных
 	node, err := a.Repo.GetNodeByID(id)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Errorf("не удалось получить ноду с id %s из базы данных", id)
+		a.Logger.WithRestApiErrorFields(r, err).Errorf("не удалось получить ноду с id %s из базы данных", id)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 	//TODO: Добавить gRPC ping, чтобы проверять запущена ли нода агент и не падать с ошибкой
 	resp, err := grpc.GetStat(node.Ip)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Errorf("не удалось получить статистику по grpc о ноде %v", node)
+		a.Logger.WithRestApiErrorFields(r, err).Errorf("не удалось получить статистику по grpc о ноде %v", node)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 	jsnResp, err := json.Marshal(resp)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Errorf("не удалось замаршалить структуру resp %v в json", resp)
+		a.Logger.WithRestApiErrorFields(r, err).Errorf("не удалось замаршалить структуру resp %v в json", resp)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
@@ -209,7 +209,7 @@ func (a *Api) Login(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&creds)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Error("не удалось декодировать структуру r.Body")
+		a.Logger.WithRestApiErrorFields(r, err).Error("не удалось декодировать структуру r.Body")
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
@@ -217,7 +217,7 @@ func (a *Api) Login(w http.ResponseWriter, r *http.Request) {
 
 	exist, err := a.Repo.Users.IsExist(creds.Username)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Errorf("не удалось проверить существование пользователя %s в базе данных", creds.Username)
+		a.Logger.WithRestApiErrorFields(r, err).Errorf("не удалось проверить существование пользователя %s в базе данных", creds.Username)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
@@ -229,7 +229,7 @@ func (a *Api) Login(w http.ResponseWriter, r *http.Request) {
 
 	user, err := a.Repo.Users.Get(creds.Username)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Errorf("не удалось получить пользователя %s из базы данных", creds.Username)
+		a.Logger.WithRestApiErrorFields(r, err).Errorf("не удалось получить пользователя %s из базы данных", creds.Username)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
@@ -237,21 +237,21 @@ func (a *Api) Login(w http.ResponseWriter, r *http.Request) {
 	if creds.Username == user.Username && creds.Password == user.Password {
 		jwt, err := auth.GenerateJWTToken(user.Username)
 		if err != nil {
-			a.Logger.WithErrorFields(r, err).Errorf("не удалось сгенерировать JWT access токен для пользователя %s", user.Username)
+			a.Logger.WithRestApiErrorFields(r, err).Errorf("не удалось сгенерировать JWT access токен для пользователя %s", user.Username)
 			JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 			return
 		}
 
 		refresh, err := auth.GenerateRefreshToken(user.Username)
 		if err != nil {
-			a.Logger.WithErrorFields(r, err).Errorf("не удалось сгенерировать JWT refresh токен для пользователя %s", user.Username)
+			a.Logger.WithRestApiErrorFields(r, err).Errorf("не удалось сгенерировать JWT refresh токен для пользователя %s", user.Username)
 			JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 			return
 		}
 
 		_, err = a.Repo.Users.UpdateRefreshToken(user.Username, refresh)
 		if err != nil {
-			a.Logger.WithErrorFields(r, err).Errorf("не удалось обновить JWT refresh токен в базе для пользователя %s", user.Username)
+			a.Logger.WithRestApiErrorFields(r, err).Errorf("не удалось обновить JWT refresh токен в базе для пользователя %s", user.Username)
 			JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 			return
 		}
@@ -268,7 +268,7 @@ func (a *Api) Refresh(w http.ResponseWriter, r *http.Request) {
 	var refresh models.RefreshToken
 	err := json.NewDecoder(r.Body).Decode(&refresh)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Error("не удалось декодировать структуру r.Body")
+		a.Logger.WithRestApiErrorFields(r, err).Error("не удалось декодировать структуру r.Body")
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
@@ -295,7 +295,7 @@ func (a *Api) Refresh(w http.ResponseWriter, r *http.Request) {
 
 	exist, err := a.Repo.Users.IsExist(claims.Username)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Errorf("не удалось проверить существование пользователя %s в базе данных", claims.Username)
+		a.Logger.WithRestApiErrorFields(r, err).Errorf("не удалось проверить существование пользователя %s в базе данных", claims.Username)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
@@ -307,7 +307,7 @@ func (a *Api) Refresh(w http.ResponseWriter, r *http.Request) {
 
 	oldRefreshToken, err := a.Repo.Users.GetRefreshToken(claims.Username)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Errorf("не удалось получить refresh токен для пользователя %s из базы данных", claims.Username)
+		a.Logger.WithRestApiErrorFields(r, err).Errorf("не удалось получить refresh токен для пользователя %s из базы данных", claims.Username)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
@@ -319,21 +319,21 @@ func (a *Api) Refresh(w http.ResponseWriter, r *http.Request) {
 
 	newJwt, err := auth.GenerateJWTToken(claims.Username)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Errorf("не удалось сгенерировать JWT access токен для пользователя %s", claims.Username)
+		a.Logger.WithRestApiErrorFields(r, err).Errorf("не удалось сгенерировать JWT access токен для пользователя %s", claims.Username)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 
 	newRefresh, err := auth.GenerateRefreshToken(claims.Username)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Errorf("не удалось сгенерировать JWT refresh токен для пользователя %s", claims.Username)
+		a.Logger.WithRestApiErrorFields(r, err).Errorf("не удалось сгенерировать JWT refresh токен для пользователя %s", claims.Username)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 
 	_, err = a.Repo.Users.UpdateRefreshToken(claims.Username, newRefresh)
 	if err != nil {
-		a.Logger.WithErrorFields(r, err).Errorf("не удалось обновить JWT refresh в базе токен для пользователя %s", claims.Username)
+		a.Logger.WithRestApiErrorFields(r, err).Errorf("не удалось обновить JWT refresh в базе токен для пользователя %s", claims.Username)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
