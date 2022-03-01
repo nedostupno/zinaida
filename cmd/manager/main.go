@@ -22,7 +22,7 @@ func main() {
 	defer db.Close()
 
 	repo := repository.NewRepository(db)
-	go grpc.RunServer(repo, log)
+	go grpc.RunServer(repo, log, cfg)
 
 	a := api.GetApi(repo, log, cfg)
 	a.InitRouter()

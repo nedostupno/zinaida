@@ -197,7 +197,7 @@ func (a *api) GetStat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//TODO: Добавить gRPC ping, чтобы проверять запущена ли нода агент и не падать с ошибкой
-	resp, err := grpc.GetStat(node.Ip)
+	resp, err := grpc.GetStat(node.Ip, a.cfg.Grpc.AgentsPort)
 	if err != nil {
 		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось получить статистику по grpc о ноде %v", node)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)

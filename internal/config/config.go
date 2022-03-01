@@ -23,8 +23,9 @@ type ManagerConfig struct {
 		Port int    `yaml:"port"`
 	} `yaml:"rest"`
 	Grpc struct {
-		Ip   string `yaml:"ip"`
-		Port int    `yaml:"port"`
+		Ip         string `yaml:"ip"`
+		Port       int    `yaml:"port"`
+		AgentsPort int    `yaml:"agents_port"`
 	} `yaml:"gRPC"`
 }
 

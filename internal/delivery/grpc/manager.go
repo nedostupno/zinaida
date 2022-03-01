@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"os"
 
+	"github.com/nedostupno/zinaida/internal/config"
 	"github.com/nedostupno/zinaida/internal/repository"
 	"github.com/nedostupno/zinaida/logger"
 	"github.com/nedostupno/zinaida/proto/agent"
@@ -87,10 +87,10 @@ func (s server) Registrate(ctx context.Context, r *manager.RegistrateRequest) (*
 	return resp, nil
 }
 
-func RunServer(repo *repository.Repository, log *logger.Logger) {
+func RunServer(repo *repository.Repository, log *logger.Logger, cfg *config.ManagerConfig) {
 	srv := grpc.NewServer()
-	port := 22842
-	ip := os.Getenv("ZINAIDA_IP")
+	port := cfg.Grpc.Port
+	ip := cfg.Grpc.Ip
 
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", ip, port))
 	if err != nil {
@@ -107,9 +107,9 @@ func RunServer(repo *repository.Repository, log *logger.Logger) {
 	}
 }
 
-func GetStat(ip string) (*agent.GetServerStatResponse, error) {
+func GetStat(ip string, port int) (*agent.GetServerStatResponse, error) {
 
-	conn, err := grpc.Dial(fmt.Sprintf("%v:22843", ip), grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("%v:%d", ip, port), grpc.WithInsecure())
 	if err != nil {
 		return nil, err
 	}
