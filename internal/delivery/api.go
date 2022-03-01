@@ -33,7 +33,9 @@ func (a *api) InitRouter() {
 
 func (a *api) Run(addr string) {
 	//TODO: обработать ошибку
-	http.ListenAndServe(addr, a.router)
+	if err := http.ListenAndServe(addr, a.router); err != nil {
+		a.logger.WhithErrorFields(err).Fatalf("Не удалось начать прослушивать адрес %s", addr)
+	}
 }
 
 func GetApi(repo *repository.Repository, log *logger.Logger) *api {
