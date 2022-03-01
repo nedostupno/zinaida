@@ -12,7 +12,7 @@ func main() {
 
 	db, err := repository.NewSqliteDB()
 	if err != nil {
-		log.Fatalln(err)
+		log.WhithErrorFields(err).Fatal("не удалось создать подключение к базе данных")
 	}
 	repo := repository.NewRepository(db)
 	go grpc.RunServer(repo, log)
