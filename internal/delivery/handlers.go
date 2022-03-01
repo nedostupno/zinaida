@@ -146,13 +146,13 @@ func (a *api) GetNodeInfo(w http.ResponseWriter, r *http.Request) {
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
-	jsnResp, err := json.Marshal(node)
-	if err != nil {
-		a.logger.WithRestApiErrorFields(r, err).Errorf("Не удалось замаршалить структуру models.NodeAgent %v в json-объект", node)
-		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
-		return
+
+	msg := map[string]interface{}{
+		"success": true,
+		"message": "Информация о ноде-агенте получена",
+		"node":    node,
 	}
-	w.Write([]byte(string(jsnResp)))
+	utils.Respond(w, msg, http.StatusOK)
 }
 
 func (a *api) DeleteNode(w http.ResponseWriter, r *http.Request) {
@@ -175,9 +175,13 @@ func (a *api) DeleteNode(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		w.Write([]byte(fmt.Sprintf("Нода-агент с id %s успешно удалена из мониторинга", id)))
+		msg := map[string]interface{}{
+			"success": true,
+			"message": fmt.Sprintf("Нода-агент с id %s успешно удалена из мониторинга", id),
+		}
+		utils.Respond(w, msg, http.StatusOK)
 	} else {
-		w.Write([]byte(fmt.Sprintf("Нода-агент с id %s не находится в мониторинге. ", id)))
+		JsonError(w, "Ноды агента с таким id не найдено в мониторинге", http.StatusNotFound)
 	}
 }
 
@@ -199,13 +203,20 @@ func (a *api) GetStat(w http.ResponseWriter, r *http.Request) {
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
-	jsnResp, err := json.Marshal(resp)
-	if err != nil {
-		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось замаршалить структуру resp %v в json", resp)
-		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
-		return
+	// jsnResp, err := json.Marshal(resp)
+	// if err != nil {
+	// 	a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось замаршалить структуру resp %v в json", resp)
+	// 	JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+	// 	return
+	// }
+
+	msg := map[string]interface{}{
+		"success": true,
+		"message": fmt.Sprintf("Cтатистика с ноды-агента с id %d собрана", node.Id),
+		"node":    node,
+		"stat":    resp,
 	}
-	w.Write([]byte(string(jsnResp)))
+	utils.Respond(w, msg, http.StatusOK)
 }
 
 func (a *api) RebootNode(w http.ResponseWriter, r *http.Request) {
