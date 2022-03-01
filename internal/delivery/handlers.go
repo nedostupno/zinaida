@@ -161,8 +161,9 @@ func (a *api) DeleteNode(w http.ResponseWriter, r *http.Request) {
 	if ifExist {
 		_, err = a.repo.DeleteNode(id)
 		if err != nil {
-			m := utils.Message(false, err.Error())
-			utils.Respond(w, m)
+			a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось удалить ноду с id %s из базы данных", id)
+			JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+			return
 		}
 
 		w.Write([]byte(fmt.Sprintf("Нода-агент с id %s успешно удалена из мониторинга", id)))
