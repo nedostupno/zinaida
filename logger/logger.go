@@ -107,5 +107,10 @@ func GetLogger() *Logger {
 		LogLevels: []logrus.Level{logrus.WarnLevel, logrus.ErrorLevel, logrus.FatalLevel},
 	})
 
+	log.AddHook(&writerHook{
+		Writer:    []io.Writer{os.Stdout},
+		LogLevels: []logrus.Level{logrus.FatalLevel},
+	})
+
 	return &Logger{log}
 }
