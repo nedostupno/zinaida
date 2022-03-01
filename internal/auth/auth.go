@@ -11,12 +11,12 @@ type CustomClaims struct {
 	jwt.StandardClaims
 }
 
-func GenerateJWTToken(u string, key string) (string, error) {
+func GenerateJWTToken(u string, key string, ttl int) (string, error) {
 
 	claims := CustomClaims{
 		Username: u,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(3 * time.Minute).Unix(),
+			ExpiresAt: time.Now().Add(time.Duration(ttl) * time.Minute).Unix(),
 			IssuedAt:  time.Now().Unix(),
 		},
 	}
@@ -28,11 +28,11 @@ func GenerateJWTToken(u string, key string) (string, error) {
 	return ss, nil
 }
 
-func GenerateRefreshToken(u string, key string) (string, error) {
+func GenerateRefreshToken(u string, key string, ttl int) (string, error) {
 	claims := CustomClaims{
 		Username: u,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(2 * time.Minute).Unix(),
+			ExpiresAt: time.Now().Add(time.Duration(ttl) * time.Minute).Unix(),
 			IssuedAt:  time.Now().Unix(),
 		},
 	}

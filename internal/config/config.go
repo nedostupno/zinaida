@@ -15,6 +15,8 @@ type ManagerConfig struct {
 	Jwt struct {
 		SecretKeyForAccessToken  string `yaml:"secret_key_for_access_token"`
 		SecretKeyForRefreshToken string `yaml:"secret_key_for_refresh_token"`
+		AccessTokenTTL           int    `yaml:"access_token_ttl"`
+		RefreshTokenTTL          int    `yaml:"refresh_token_ttl"`
 	} `yaml:"jwt"`
 	Rest struct {
 		Ip   string `yaml:"ip"`

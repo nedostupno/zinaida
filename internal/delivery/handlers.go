@@ -256,14 +256,14 @@ func (a *api) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if creds.Username == user.Username && creds.Password == user.Password {
-		jwt, err := auth.GenerateJWTToken(user.Username, a.cfg.Jwt.SecretKeyForAccessToken)
+		jwt, err := auth.GenerateJWTToken(user.Username, a.cfg.Jwt.SecretKeyForAccessToken, a.cfg.Jwt.AccessTokenTTL)
 		if err != nil {
 			a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось сгенерировать JWT access токен для пользователя %s", user.Username)
 			JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 			return
 		}
 
-		refresh, err := auth.GenerateRefreshToken(user.Username, a.cfg.Jwt.SecretKeyForRefreshToken)
+		refresh, err := auth.GenerateRefreshToken(user.Username, a.cfg.Jwt.SecretKeyForRefreshToken, a.cfg.Jwt.RefreshTokenTTL)
 		if err != nil {
 			a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось сгенерировать JWT refresh токен для пользователя %s", user.Username)
 			JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
@@ -338,14 +338,14 @@ func (a *api) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newJwt, err := auth.GenerateJWTToken(claims.Username, a.cfg.Jwt.SecretKeyForAccessToken)
+	newJwt, err := auth.GenerateJWTToken(claims.Username, a.cfg.Jwt.SecretKeyForAccessToken, a.cfg.Jwt.AccessTokenTTL)
 	if err != nil {
 		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось сгенерировать JWT access токен для пользователя %s", claims.Username)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 
-	newRefresh, err := auth.GenerateRefreshToken(claims.Username, a.cfg.Jwt.SecretKeyForRefreshToken)
+	newRefresh, err := auth.GenerateRefreshToken(claims.Username, a.cfg.Jwt.SecretKeyForRefreshToken, a.cfg.Jwt.RefreshTokenTTL)
 	if err != nil {
 		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось сгенерировать JWT refresh токен для пользователя %s", claims.Username)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
