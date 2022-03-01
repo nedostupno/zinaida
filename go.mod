@@ -7,6 +7,7 @@ require (
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.5.0
+	github.com/ilyakaznacheev/cleanenv v1.2.6
 	github.com/mattn/go-sqlite3 v1.14.11
 	github.com/sirupsen/logrus v1.8.1
 	golang.org/x/sys v0.0.0-20220209214540-3681064d5158
