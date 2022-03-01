@@ -6,23 +6,17 @@ import (
 	"net"
 	"syscall"
 	"time"
-)
 
-const (
-	DEFAULT_PORT        = 33434
-	DEFAULT_MAX_HOPS    = 15
-	DEFAULT_TIMEOUT_MS  = 500
-	DEFAULT_RETRIES     = 3
-	DEFAULT_PACKET_SIZE = 52
+	"github.com/nedostupno/zinaida/internal/config"
 )
 
 type Tracer struct {
 	options Options
 }
 
-func NewTracer() *Tracer {
+func NewTracer(cfg *config.ManagerConfig) *Tracer {
 	t := new(Tracer)
-	t.SetOptions()
+	t.SetOptions(cfg)
 	return t
 }
 
@@ -88,13 +82,13 @@ func (t *Tracer) parseDestAddress(dest string) ([4]byte, error) {
 
 // Пока в проекте нет обработки конфигов,
 // то значения для опций берем из констант
-func (t *Tracer) SetOptions() {
+func (t *Tracer) SetOptions(cfg *config.ManagerConfig) {
 	t.options = Options{
-		port:       DEFAULT_PORT,
-		maxHops:    DEFAULT_MAX_HOPS,
-		timeout:    DEFAULT_TIMEOUT_MS,
-		retries:    DEFAULT_RETRIES,
-		packetSize: DEFAULT_PACKET_SIZE,
+		port:       cfg.Trace.Port,
+		maxHops:    cfg.Trace.Max_hops,
+		timeout:    cfg.Trace.Timeout_ms,
+		retries:    cfg.Trace.Retries,
+		packetSize: cfg.Trace.Packet_size,
 	}
 }
 

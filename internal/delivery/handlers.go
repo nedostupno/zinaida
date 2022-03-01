@@ -61,7 +61,7 @@ func (a *api) GetMap(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		defer close(hops)
 		for i, domain := range destinations {
-			t := traceroute.NewTracer()
+			t := traceroute.NewTracer(a.cfg)
 			err := t.Traceroute(i, domain, hops)
 			if err != nil {
 				a.logger.WithRestApiErrorFields(r, err).Errorf("Не удалось построить трассировку до ноды %v", domain)
