@@ -94,7 +94,7 @@ func RunServer(repo *repository.Repository, log *logger.Logger) {
 
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", ip, port))
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.WhithErrorFields(err).Fatalf("Не удалось начать прослушивать адрес %s:%d", ip, port)
 	}
 
 	var s server
@@ -103,7 +103,7 @@ func RunServer(repo *repository.Repository, log *logger.Logger) {
 	manager.RegisterManagerServer(srv, s)
 
 	if err := srv.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %s", err)
+		log.WhithErrorFields(err).Fatalf("Не удалось начать обслуживать grpc сервер")
 	}
 }
 
