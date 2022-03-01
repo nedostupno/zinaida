@@ -1,9 +1,11 @@
 package delivery
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/nedostupno/zinaida/internal/config"
 	"github.com/nedostupno/zinaida/internal/repository"
 	"github.com/nedostupno/zinaida/logger"
 )
@@ -12,6 +14,7 @@ type api struct {
 	router *mux.Router
 	repo   *repository.Repository
 	logger *logger.Logger
+	cfg    *config.ManagerConfig
 }
 
 func (a *api) InitRouter() {
@@ -31,17 +34,19 @@ func (a *api) InitRouter() {
 	router.Use(a.LoggingMidleware, a.JwtAuthenticationMiddleware)
 }
 
-func (a *api) Run(addr string) {
-	//TODO: обработать ошибку
+func (a *api) Run() {
+	addr := fmt.Sprintf("%s:%d", a.cfg.Rest.Ip, a.cfg.Rest.Port)
+
 	if err := http.ListenAndServe(addr, a.router); err != nil {
 		a.logger.WhithErrorFields(err).Fatalf("Не удалось начать прослушивать адрес %s", addr)
 	}
 }
 
-func GetApi(repo *repository.Repository, log *logger.Logger) *api {
+func GetApi(repo *repository.Repository, log *logger.Logger, cfg *config.ManagerConfig) *api {
 	return &api{
 		router: &mux.Router{},
 		repo:   repo,
 		logger: log,
+		cfg:    cfg,
 	}
 }
