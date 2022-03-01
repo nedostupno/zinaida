@@ -16,14 +16,18 @@ import (
 )
 
 type APIError struct {
-	Msg string `json:"error"`
+	Success bool   `json:"success"`
+	Msg     string `json:"error"`
 }
 
 func JsonError(w http.ResponseWriter, msg string, code int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(code)
-	err := APIError{Msg: msg}
+	err := APIError{
+		Success: false,
+		Msg:     msg,
+	}
 	json.NewEncoder(w).Encode(err)
 }
 
@@ -83,13 +87,13 @@ func (a *api) GetNodes(w http.ResponseWriter, r *http.Request) {
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
-	jsnResp, err := json.Marshal(nodes)
-	if err != nil {
-		a.logger.WithRestApiErrorFields(r, err).Errorf("Не удалось замаршалить []models.NodeAgent %v в json-объект", nodes)
-		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
-		return
+
+	msg := map[string]interface{}{
+		"success": true,
+		"message": "Cписок нод получен",
+		"node":    nodes,
 	}
-	w.Write([]byte(string(jsnResp)))
+	utils.Respond(w, msg, http.StatusOK)
 }
 
 func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
@@ -123,7 +127,12 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte(fmt.Sprintf("НодаАгент успешно зарегистрирована: %v", node)))
+	msg := map[string]interface{}{
+		"success": true,
+		"message": "Нода агент успешно зарегистрирована",
+		"node":    node,
+	}
+	utils.Respond(w, msg, http.StatusOK)
 }
 
 func (a *api) GetNodeInfo(w http.ResponseWriter, r *http.Request) {
@@ -258,7 +267,7 @@ func (a *api) Login(w http.ResponseWriter, r *http.Request) {
 		}
 
 		msg := utils.JWTMessage(jwt, refresh)
-		utils.Respond(w, msg)
+		utils.Respond(w, msg, http.StatusOK)
 		return
 	}
 	JsonError(w, "Переданы некорреткные данные", http.StatusUnauthorized)
@@ -340,5 +349,5 @@ func (a *api) Refresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	msg := utils.JWTMessage(newJwt, newRefresh)
-	utils.Respond(w, msg)
+	utils.Respond(w, msg, http.StatusOK)
 }
