@@ -11,8 +11,7 @@ type CustomClaims struct {
 	jwt.StandardClaims
 }
 
-func GenerateJWTToken(u string) (string, error) {
-	signingKey := []byte("shaka-waka")
+func GenerateJWTToken(u string, key string) (string, error) {
 
 	claims := CustomClaims{
 		Username: u,
@@ -22,16 +21,14 @@ func GenerateJWTToken(u string) (string, error) {
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	ss, err := token.SignedString(signingKey)
+	ss, err := token.SignedString([]byte(key))
 	if err != nil {
 		return "", err
 	}
 	return ss, nil
 }
 
-func GenerateRefreshToken(u string) (string, error) {
-	signingKey := []byte("Baka-sraka")
-
+func GenerateRefreshToken(u string, key string) (string, error) {
 	claims := CustomClaims{
 		Username: u,
 		StandardClaims: jwt.StandardClaims{
@@ -40,7 +37,7 @@ func GenerateRefreshToken(u string) (string, error) {
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	ss, err := token.SignedString(signingKey)
+	ss, err := token.SignedString([]byte(key))
 	if err != nil {
 		return "", err
 	}

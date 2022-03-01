@@ -256,14 +256,14 @@ func (a *api) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if creds.Username == user.Username && creds.Password == user.Password {
-		jwt, err := auth.GenerateJWTToken(user.Username)
+		jwt, err := auth.GenerateJWTToken(user.Username, a.cfg.Jwt.SecretKeyForAccessToken)
 		if err != nil {
 			a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось сгенерировать JWT access токен для пользователя %s", user.Username)
 			JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 			return
 		}
 
-		refresh, err := auth.GenerateRefreshToken(user.Username)
+		refresh, err := auth.GenerateRefreshToken(user.Username, a.cfg.Jwt.SecretKeyForRefreshToken)
 		if err != nil {
 			a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось сгенерировать JWT refresh токен для пользователя %s", user.Username)
 			JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
@@ -305,7 +305,7 @@ func (a *api) Refresh(w http.ResponseWriter, r *http.Request) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte("Baka-sraka"), nil
+		return []byte(a.cfg.Jwt.SecretKeyForRefreshToken), nil
 	})
 
 	// Ошибка будет выброшена даже в том случае, если токен истек, так что ручные проверки не требуются
@@ -338,14 +338,14 @@ func (a *api) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newJwt, err := auth.GenerateJWTToken(claims.Username)
+	newJwt, err := auth.GenerateJWTToken(claims.Username, a.cfg.Jwt.SecretKeyForAccessToken)
 	if err != nil {
 		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось сгенерировать JWT access токен для пользователя %s", claims.Username)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
 
-	newRefresh, err := auth.GenerateRefreshToken(claims.Username)
+	newRefresh, err := auth.GenerateRefreshToken(claims.Username, a.cfg.Jwt.SecretKeyForRefreshToken)
 	if err != nil {
 		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось сгенерировать JWT refresh токен для пользователя %s", claims.Username)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)

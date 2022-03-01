@@ -41,7 +41,7 @@ func (a *api) JwtAuthenticationMiddleware(h http.Handler) http.Handler {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
-			return []byte("shaka-waka"), nil
+			return []byte(a.cfg.Jwt.SecretKeyForAccessToken), nil
 		})
 
 		if err != nil || !token.Valid {
