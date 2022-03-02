@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 
+	"github.com/nedostupno/zinaida/internal/config"
 	"github.com/nedostupno/zinaida/proto/agent"
 	"github.com/nedostupno/zinaida/proto/manager"
 	"github.com/nedostupno/zinaida/stat"
@@ -14,9 +14,13 @@ import (
 )
 
 func main() {
-	managerIP := os.Getenv("ZINAIDA_IP")
+	cfg, err := config.GetAgentConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	conn, err := grpc.Dial(managerIP+":22842", grpc.WithInsecure())
+	addr := fmt.Sprintf("%s:%d", cfg.Manager.Ip, cfg.Manager.Port)
+	conn, err := grpc.Dial(addr, grpc.WithInsecure())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,9 +28,19 @@ func main() {
 
 	c := manager.NewManagerClient(conn)
 	r := &manager.RegistrateRequest{}
-	domain := os.Getenv("DOMAIN_AGENT")
-	ip := os.Getenv("IP_AGENT")
 
+	// TODO: Если домен не пустой, то необходимо проверить его существование.
+	// В случае, если ресурсные записи не отдаются, то написать об этом в лог
+	//
+	// Если ресурсные записи отдаются, то получаем A запись и проверяем,
+	// что этот ip поднят на одном из интерфейсов.
+	domain := cfg.Agent.Domain
+
+	ip := cfg.Agent.Ip
+
+	// TODO: если домен не указан, то необходимо взять тот ip,
+	// что настроен на одном из поднятых интерфейсах,
+	// а не получать его из конфига
 	if domain == "" {
 		r.Node = &manager.RegistrateRequest_Ip{ip}
 	} else {
@@ -40,7 +54,7 @@ func main() {
 
 	fmt.Println(resp)
 
-	RunServer()
+	RunServer(cfg)
 }
 
 func Registrate(ctx context.Context, c manager.ManagerClient, r *manager.RegistrateRequest) (*manager.RegistrateResponse, error) {
@@ -51,10 +65,12 @@ type server struct {
 	agent.UnimplementedAgentServer
 }
 
-func RunServer() {
+func RunServer(cfg *config.AgentConfig) {
 	srv := grpc.NewServer()
-	port := 22843
-	ip := os.Getenv("IP_AGENT")
+	port := cfg.Agent.Port
+	// TODO: Если ip не указан, то нужно взять тот ip, что настроен на одном из поднятых интерфейсах,
+	// а не получать его из конфига
+	ip := cfg.Agent.Ip
 
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", ip, port))
 	if err != nil {
