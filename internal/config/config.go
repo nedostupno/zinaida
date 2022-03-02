@@ -29,9 +29,30 @@ type ManagerConfig struct {
 	} `yaml:"gRPC"`
 }
 
+type AgentConfig struct {
+	Manager struct {
+		Ip   string `yaml:"ip" env-required:"true"`
+		Port int    `yaml:"port" env-default:"42222"`
+	} `yaml:"manager"`
+	Agent struct {
+		Ip     string `yaml:"ip" env-default:"0.0.0.0"`
+		Port   int    `yaml:"port" env-default:"24444"`
+		Domain string `yaml:"domain"`
+	} `yaml:"agent"`
+}
+
 func GetManagerConfig() (*ManagerConfig, error) {
 	var cfg ManagerConfig
 	err := cleanenv.ReadConfig("manager_config.yaml", &cfg)
+	if err != nil {
+		return nil, err
+	}
+	return &cfg, nil
+}
+
+func GetAgentConfig() (*AgentConfig, error) {
+	var cfg AgentConfig
+	err := cleanenv.ReadConfig("agent_config.yaml", &cfg)
 	if err != nil {
 		return nil, err
 	}
