@@ -9,9 +9,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/nedostupno/zinaida/internal/auth"
-	"github.com/nedostupno/zinaida/internal/auth/utils"
 	"github.com/nedostupno/zinaida/internal/delivery/grpc"
 	models "github.com/nedostupno/zinaida/internal/models"
+	"github.com/nedostupno/zinaida/internal/utils"
 	"github.com/nedostupno/zinaida/traceroute"
 )
 
