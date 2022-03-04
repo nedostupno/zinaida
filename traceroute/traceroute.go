@@ -80,8 +80,6 @@ func (t *Tracer) parseDestAddress(dest string) ([4]byte, error) {
 	return destAddr, nil
 }
 
-// Пока в проекте нет обработки конфигов,
-// то значения для опций берем из констант
 func (t *Tracer) SetOptions(cfg *config.ManagerConfig) {
 	t.options = Options{
 		port:       cfg.Trace.Port,
