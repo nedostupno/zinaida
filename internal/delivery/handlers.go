@@ -207,7 +207,18 @@ func (a *api) GetStat(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	//TODO: добавить проверку существования ноды с переданным id в базе данных
+	isExist, err := a.repo.Nodes.CheckNodeExistenceByID(id)
+	if err != nil {
+		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось проверить наличие ноды с id %s в базе данных", id)
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+		return
+	}
+
+	if !isExist {
+		JsonError(w, "Ноды агента с таким id не найдено в мониторинге", http.StatusNotFound)
+		return
+	}
+
 	node, err := a.repo.GetNodeByID(id)
 	if err != nil {
 		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось получить ноду с id %s из базы данных", id)
