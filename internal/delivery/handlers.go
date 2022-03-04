@@ -139,7 +139,7 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 		"message": "Нода агент успешно зарегистрирована",
 		"node":    node,
 	}
-	utils.Respond(w, msg, http.StatusOK)
+	utils.Respond(w, msg, http.StatusCreated)
 }
 
 func (a *api) GetNodeInfo(w http.ResponseWriter, r *http.Request) {
