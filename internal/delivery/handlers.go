@@ -139,7 +139,18 @@ func (a *api) GetNodeInfo(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	//TODO: Добавить проверку существования ноды с указанным id
+	isExist, err := a.repo.Nodes.CheckNodeExistenceByID(id)
+	if err != nil {
+		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось проверить наличие ноды с id %s в базе данных", id)
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+		return
+	}
+
+	if !isExist {
+		JsonError(w, "Ноды агента с таким id не найдено в мониторинге", http.StatusNotFound)
+		return
+	}
+
 	node, err := a.repo.GetNodeByID(id)
 	if err != nil {
 		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось получить ноду с id %s из базы данных", id)
@@ -165,8 +176,6 @@ func (a *api) DeleteNode(w http.ResponseWriter, r *http.Request) {
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
-
-	// TODO: Заменить блок if-else на if !
 
 	if !isExist {
 		JsonError(w, "Ноды агента с таким id не найдено в мониторинге", http.StatusNotFound)
