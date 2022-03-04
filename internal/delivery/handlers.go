@@ -39,8 +39,15 @@ var upgrader = websocket.Upgrader{
 func (a *api) GetMap(w http.ResponseWriter, r *http.Request) {
 	destinations := []string{}
 
-	// TODO: Проверять содержится ли хоть один элемент в nodes
 	nodes, err := a.repo.ListAllNodes()
+	if len(nodes) == 0 {
+		msg := map[string]interface{}{
+			"success": true,
+			"message": "В мониторинг нет ни одной ноды-агента. Не возможно построить карту сети.",
+		}
+		utils.Respond(w, msg, http.StatusOK)
+	}
+
 	for _, node := range nodes {
 		if node.Domain != "" {
 			destinations = append(destinations, node.Domain)
