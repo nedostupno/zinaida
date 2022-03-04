@@ -159,7 +159,7 @@ func (a *api) DeleteNode(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	ifExist, err := a.repo.Nodes.CheckNodeExistenceByID(id)
+	isExist, err := a.repo.Nodes.CheckNodeExistenceByID(id)
 	if err != nil {
 		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось проверить наличие ноды с id %s в базе данных", id)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
@@ -167,7 +167,7 @@ func (a *api) DeleteNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: Заменить блок if-else на if !
-	if ifExist {
+	if isExist {
 		_, err = a.repo.DeleteNode(id)
 		if err != nil {
 			a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось удалить ноду с id %s из базы данных", id)
