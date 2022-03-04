@@ -167,22 +167,24 @@ func (a *api) DeleteNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: Заменить блок if-else на if !
-	if isExist {
-		_, err = a.repo.DeleteNode(id)
-		if err != nil {
-			a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось удалить ноду с id %s из базы данных", id)
-			JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
-			return
-		}
 
-		msg := map[string]interface{}{
-			"success": true,
-			"message": fmt.Sprintf("Нода-агент с id %s успешно удалена из мониторинга", id),
-		}
-		utils.Respond(w, msg, http.StatusOK)
-	} else {
+	if !isExist {
 		JsonError(w, "Ноды агента с таким id не найдено в мониторинге", http.StatusNotFound)
+		return
 	}
+
+	_, err = a.repo.DeleteNode(id)
+	if err != nil {
+		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось удалить ноду с id %s из базы данных", id)
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+		return
+	}
+
+	msg := map[string]interface{}{
+		"success": true,
+		"message": fmt.Sprintf("Нода-агент с id %s успешно удалена из мониторинга", id),
+	}
+	utils.Respond(w, msg, http.StatusOK)
 }
 
 func (a *api) GetStat(w http.ResponseWriter, r *http.Request) {
