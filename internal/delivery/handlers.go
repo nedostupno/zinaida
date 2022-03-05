@@ -3,6 +3,7 @@ package delivery
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 
 	"github.com/golang-jwt/jwt"
@@ -117,6 +118,38 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 		JsonError(w, "Переданы некорректные данные", http.StatusBadRequest)
 		return
 	}
+
+	if n.Domain != "" {
+		resolvedIPs, err := net.LookupHost(n.Domain)
+		if err != nil {
+			if r, ok := err.(*net.DNSError); ok && r.IsNotFound {
+				JsonError(w, fmt.Sprintf("Не удалось получить информацию о домене %s", n.Domain), http.StatusOK)
+			}
+			a.logger.WithRestApiErrorFields(r, err).Errorf("Не удалось узнать ip для домена: %s", n.Domain)
+			JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+			return
+		}
+
+		//TODO: Если ip пустой, то нужно будет по ip домена выполнить проверку через gRPC.Ping
+		// и если ответа от сервера не последует, то сообщить, что на сервере, на который указывает домен
+		//  не запущена нода-агент
+		if n.Ip == "" {
+			n.Ip = resolvedIPs[0]
+		}
+
+		var ok bool
+		for _, ip := range resolvedIPs {
+			if ip == n.Ip {
+				ok = true
+			}
+		}
+
+		if !ok && n.Ip != "" {
+			JsonError(w, "Указанный ip адрес и ip адрес из ресурсных записей домена отличаются", http.StatusBadRequest)
+			return
+		}
+	}
+	//TODO: grpc.Ping по n.IP
 
 	// TODO: если передан пустой ip, то необходимо по домену определить ip адрес,
 	// и если определить ip не удастся, то ноду в базу данных не добавляем
