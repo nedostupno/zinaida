@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -19,6 +20,10 @@ func main() {
 		log.Fatal(err)
 	}
 
+	RunServer(cfg)
+}
+
+func Registrate(cfg *config.AgentConfig) error {
 	addr := fmt.Sprintf("%s:%d", cfg.Manager.Ip, cfg.Manager.Port)
 	conn, err := grpc.Dial(addr, grpc.WithInsecure())
 	if err != nil {
@@ -29,36 +34,88 @@ func main() {
 	c := manager.NewManagerClient(conn)
 	r := &manager.RegistrateRequest{}
 
-	// TODO: Если домен не пустой, то необходимо проверить его существование.
-	// В случае, если ресурсные записи не отдаются, то написать об этом в лог
-	//
-	// Если ресурсные записи отдаются, то получаем A запись и проверяем,
-	// что этот ip поднят на одном из интерфейсов.
 	domain := cfg.Agent.Domain
 
 	ip := cfg.Agent.Ip
 
-	// TODO: если домен не указан, то необходимо взять тот ip,
-	// что настроен на одном из поднятых интерфейсах,
-	// а не получать его из конфига
-	if domain == "" {
-		r.Node = &manager.RegistrateRequest_Ip{ip}
-	} else {
-		r.Node = &manager.RegistrateRequest_Domain{domain}
+	// Получаем адреса на поднятых интерфейсах
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	resp, err := Registrate(context.Background(), c, r)
+	// Получаем слайс ip адрессов, поднятных на интерфейсх, кроме loopback
+	var ipOnInerfaces []string
+	for _, a := range addrs {
+		if IPNet, ok := a.(*net.IPNet); ok && !IPNet.IP.IsLoopback() {
+			// Если у нас адрес IPv6, то метод To4 вернет nil
+			if IPNet.IP.To16() != nil {
+				ipOnInerfaces = append(ipOnInerfaces, IPNet.IP.String())
+			}
+		}
+	}
+
+	if len(ipOnInerfaces) == 0 {
+		err = errors.New("не обнаружено ни одного ipv4 адреса на интерфейсах кроме loopback")
+		log.Fatal(err)
+	}
+
+	// Проверяем является ли переданный ip одним из ip поднятых на интерфейсах
+	var ok bool
+	for _, i := range ipOnInerfaces {
+		if i == ip {
+			r.Ip = ip
+			ok = true
+		}
+	}
+	if !ok {
+		r.Ip = ipOnInerfaces[0]
+	}
+
+	// Если не предеан ни домен, ни ip, то регестируем ноду с ip, который поднят на интерфейсе
+	if domain == "" && ip == "" {
+		r.Ip = ipOnInerfaces[0]
+	}
+
+	if domain != "" {
+		// Проверяем существование домена и получаем его ip адрес
+		ips, err := net.LookupHost(domain)
+		if err != nil {
+			if r, ok := err.(*net.DNSError); ok && r.IsNotFound {
+				log.Fatalln("Передан не существующий домен")
+			}
+			log.Fatal("Не удалось узнать ip домена")
+			return err
+		}
+
+		var ipDomainIsCorrect bool
+		var ipIndex int
+
+		// Если ip не был передан, то проверяем равен ли ip домена ip на интерфейсе
+		for c, i := range ips {
+			for _, j := range ipOnInerfaces {
+				if i == j {
+					ipDomainIsCorrect = true
+					ipIndex = c
+				}
+			}
+		}
+
+		if !ipDomainIsCorrect {
+			log.Fatal("Домен смотрит не туда")
+		}
+
+		r.Domain = domain
+		r.Ip = ips[ipIndex]
+	}
+
+	resp, err := c.Registrate(context.Background(), r)
 	if err != nil {
-		log.Println("Yps...... Nice Error: ", err)
+		log.Printf("не удалось зарегистрировать ноду c данными: %v. Ошибка: %v", r, err)
 	}
 
 	fmt.Println(resp)
-
-	RunServer(cfg)
-}
-
-func Registrate(ctx context.Context, c manager.ManagerClient, r *manager.RegistrateRequest) (*manager.RegistrateResponse, error) {
-	return c.Registrate(ctx, r)
+	return nil
 }
 
 type server struct {
@@ -68,8 +125,6 @@ type server struct {
 func RunServer(cfg *config.AgentConfig) {
 	srv := grpc.NewServer()
 	port := cfg.Agent.Port
-	// TODO: Если ip не указан, то нужно взять тот ip, что настроен на одном из поднятых интерфейсах,
-	// а не получать его из конфига
 	ip := cfg.Agent.Ip
 
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", ip, port))
@@ -79,6 +134,8 @@ func RunServer(cfg *config.AgentConfig) {
 
 	var s server
 	agent.RegisterAgentServer(srv, s)
+
+	Registrate(cfg)
 
 	if err := srv.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %s", err)
