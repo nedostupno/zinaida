@@ -23,39 +23,22 @@ func (s server) Registrate(ctx context.Context, r *manager.RegistrateRequest) (*
 	domain := r.GetDomain()
 	ip := r.GetIp()
 
-	if ip == "" {
-		ip, err := net.ResolveIPAddr("ip4", domain)
-		if err != nil {
-			return nil, err
+	ips, err := net.LookupHost(domain)
+	if err != nil {
+		if r, ok := err.(*net.DNSError); ok && r.IsNotFound {
+			return nil, fmt.Errorf("передан не существующий домен")
 		}
+		return nil, fmt.Errorf("не удалось узнать ip домена")
+	}
+	var ok bool
+	for _, i := range ips {
+		if i == ip {
+			ok = true
+		}
+	}
 
-		isExist, err := s.repo.CheckNodeExistenceByIP(ip.String())
-		if err != nil {
-			return nil, err
-		}
-
-		if isExist {
-			return nil, fmt.Errorf("данная нода уже добавлена в мониторинг")
-		}
-
-		_, err = s.repo.AddNode(ip.String(), domain)
-		if err != nil {
-			return nil, err
-		}
-
-		node, err := s.repo.GetNodeByIP(ip.String())
-		if err != nil {
-			return nil, err
-		}
-
-		resp := &manager.RegistrateResponse{
-			NodeAgent: &manager.NodeAgent{
-				Id:     int64(node.Id),
-				Ip:     node.Ip,
-				Domain: node.Domain,
-			},
-		}
-		return resp, nil
+	if !ok {
+		return nil, fmt.Errorf("переданный ip адрес и ip адерс из А записи домена не совпадают")
 	}
 
 	isExist, err := s.repo.CheckNodeExistenceByIP(ip)
@@ -67,7 +50,7 @@ func (s server) Registrate(ctx context.Context, r *manager.RegistrateRequest) (*
 		return nil, fmt.Errorf("данная нода уже добавлена в мониторинг")
 	}
 
-	_, err = s.repo.AddNode(ip, "")
+	_, err = s.repo.AddNode(ip, domain)
 	if err != nil {
 		return nil, err
 	}
