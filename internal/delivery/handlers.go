@@ -151,9 +151,32 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 	}
 	//TODO: grpc.Ping по n.IP
 
+	isExistByDomain, err := a.repo.Nodes.CheckNodeExistenceByDomain(n.Domain)
+	if err != nil {
+		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось добавить ноду %v в мониторинг", n)
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+		return
+	}
+	isExistByIP, err := a.repo.Nodes.CheckNodeExistenceByIP(n.Ip)
+	if err != nil {
+		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось добавить ноду %v в мониторинг", n)
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+		return
+	}
+
+	if (isExistByDomain && n.Domain != "") || isExistByIP {
+		msg := map[string]interface{}{
+			"success": true,
+			"message": "Нода агент уже добавлена в мониторинг",
+			"node":    n,
+		}
+		utils.Respond(w, msg, http.StatusOK)
+		return
+	}
+
 	// TODO: если передан пустой ip, то необходимо по домену определить ip адрес,
 	// и если определить ip не удастся, то ноду в базу данных не добавляем
-	_, err := a.repo.AddNode(n.Ip, n.Domain)
+	_, err = a.repo.AddNode(n.Ip, n.Domain)
 	if err != nil {
 		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось добавить ноду %v в мониторинг", n)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
