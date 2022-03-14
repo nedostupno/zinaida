@@ -88,6 +88,15 @@ func (n *NodesLite) CheckNodeExistenceByID(id string) (bool, error) {
 	return isExist, nil
 }
 
+func (n *NodesLite) CheckNodeExistenceByDomain(domain string) (bool, error) {
+	var isExist bool
+	err := n.db.QueryRow("SELECT exists (SELECT 1 FROM Nodes WHERE domain == $1)", domain).Scan(&isExist)
+	if err != nil {
+		return false, err
+	}
+	return isExist, nil
+}
+
 func (n *NodesLite) GetAllNodesIP() ([]string, error) {
 	rows, err := n.db.Query("SELECT ip FROM Nodes")
 	if err != nil {
