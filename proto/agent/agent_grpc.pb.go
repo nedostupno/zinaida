@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AgentClient interface {
 	GetServerStat(ctx context.Context, in *GetServerStatRequest, opts ...grpc.CallOption) (*GetServerStatResponse, error)
+	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error)
 }
 
 type agentClient struct {
@@ -42,11 +43,21 @@ func (c *agentClient) GetServerStat(ctx context.Context, in *GetServerStatReques
 	return out, nil
 }
 
+func (c *agentClient) Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error) {
+	out := new(PingResponse)
+	err := c.cc.Invoke(ctx, "/agent.agent/Ping", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AgentServer is the server API for Agent service.
 // All implementations must embed UnimplementedAgentServer
 // for forward compatibility
 type AgentServer interface {
 	GetServerStat(context.Context, *GetServerStatRequest) (*GetServerStatResponse, error)
+	Ping(context.Context, *PingRequest) (*PingResponse, error)
 	mustEmbedUnimplementedAgentServer()
 }
 
@@ -56,6 +67,9 @@ type UnimplementedAgentServer struct {
 
 func (UnimplementedAgentServer) GetServerStat(context.Context, *GetServerStatRequest) (*GetServerStatResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetServerStat not implemented")
+}
+func (UnimplementedAgentServer) Ping(context.Context, *PingRequest) (*PingResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
 }
 func (UnimplementedAgentServer) mustEmbedUnimplementedAgentServer() {}
 
@@ -88,6 +102,24 @@ func _Agent_GetServerStat_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Agent_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServer).Ping(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/agent.agent/Ping",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServer).Ping(ctx, req.(*PingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Agent_ServiceDesc is the grpc.ServiceDesc for Agent service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +130,10 @@ var Agent_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetServerStat",
 			Handler:    _Agent_GetServerStat_Handler,
+		},
+		{
+			MethodName: "Ping",
+			Handler:    _Agent_Ping_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

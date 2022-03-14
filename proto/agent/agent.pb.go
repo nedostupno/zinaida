@@ -808,6 +808,82 @@ func (*Void) Descriptor() ([]byte, []int) {
 	return file_proto_agent_proto_rawDescGZIP(), []int{10}
 }
 
+type PingRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *PingRequest) Reset() {
+	*x = PingRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_agent_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PingRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PingRequest) ProtoMessage() {}
+
+func (x *PingRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_agent_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PingRequest.ProtoReflect.Descriptor instead.
+func (*PingRequest) Descriptor() ([]byte, []int) {
+	return file_proto_agent_proto_rawDescGZIP(), []int{11}
+}
+
+type PingResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *PingResponse) Reset() {
+	*x = PingResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_agent_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PingResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PingResponse) ProtoMessage() {}
+
+func (x *PingResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_agent_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PingResponse.ProtoReflect.Descriptor instead.
+func (*PingResponse) Descriptor() ([]byte, []int) {
+	return file_proto_agent_proto_rawDescGZIP(), []int{12}
+}
+
 var File_proto_agent_proto protoreflect.FileDescriptor
 
 var file_proto_agent_proto_rawDesc = []byte{
@@ -891,14 +967,19 @@ var file_proto_agent_proto_rawDesc = []byte{
 	0x61, 0x67, 0x65, 0x6e, 0x74, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x53, 0x74, 0x61, 0x74,
 	0x52, 0x0a, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x53, 0x74, 0x61, 0x74, 0x12, 0x10, 0x0a, 0x03,
 	0x65, 0x72, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x65, 0x72, 0x72, 0x22, 0x06,
-	0x0a, 0x04, 0x56, 0x6f, 0x69, 0x64, 0x32, 0x53, 0x0a, 0x05, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x12,
+	0x0a, 0x04, 0x56, 0x6f, 0x69, 0x64, 0x22, 0x0d, 0x0a, 0x0b, 0x50, 0x69, 0x6e, 0x67, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x0e, 0x0a, 0x0c, 0x50, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0x84, 0x01, 0x0a, 0x05, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x12,
 	0x4a, 0x0a, 0x0d, 0x47, 0x65, 0x74, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x53, 0x74, 0x61, 0x74,
 	0x12, 0x1b, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x2e, 0x47, 0x65, 0x74, 0x53, 0x65, 0x72, 0x76,
 	0x65, 0x72, 0x53, 0x74, 0x61, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1c, 0x2e,
 	0x61, 0x67, 0x65, 0x6e, 0x74, 0x2e, 0x47, 0x65, 0x74, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x53,
-	0x74, 0x61, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x0f, 0x5a, 0x0d, 0x2e,
-	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x62, 0x06, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x33,
+	0x74, 0x61, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2f, 0x0a, 0x04, 0x50,
+	0x69, 0x6e, 0x67, 0x12, 0x12, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x2e, 0x50, 0x69, 0x6e, 0x67,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x13, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x2e,
+	0x50, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x0f, 0x5a, 0x0d,
+	0x2e, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -913,7 +994,7 @@ func file_proto_agent_proto_rawDescGZIP() []byte {
 	return file_proto_agent_proto_rawDescData
 }
 
-var file_proto_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_proto_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_proto_agent_proto_goTypes = []interface{}{
 	(*LA)(nil),                    // 0: agent.LA
 	(*Mem)(nil),                   // 1: agent.Mem
@@ -926,23 +1007,27 @@ var file_proto_agent_proto_goTypes = []interface{}{
 	(*GetServerStatRequest)(nil),  // 8: agent.GetServerStatRequest
 	(*GetServerStatResponse)(nil), // 9: agent.GetServerStatResponse
 	(*Void)(nil),                  // 10: agent.Void
+	(*PingRequest)(nil),           // 11: agent.PingRequest
+	(*PingResponse)(nil),          // 12: agent.PingResponse
 }
 var file_proto_agent_proto_depIdxs = []int32{
-	3, // 0: agent.CPU.CPUPercent:type_name -> agent.CPUPercent
-	6, // 1: agent.TopProc.Process:type_name -> agent.Process
-	2, // 2: agent.ServerStat.cpu:type_name -> agent.CPU
-	0, // 3: agent.ServerStat.la:type_name -> agent.LA
-	1, // 4: agent.ServerStat.mem:type_name -> agent.Mem
-	4, // 5: agent.ServerStat.disk:type_name -> agent.Disk
-	5, // 6: agent.ServerStat.top_proc:type_name -> agent.TopProc
-	7, // 7: agent.GetServerStatResponse.serverStat:type_name -> agent.ServerStat
-	8, // 8: agent.agent.GetServerStat:input_type -> agent.GetServerStatRequest
-	9, // 9: agent.agent.GetServerStat:output_type -> agent.GetServerStatResponse
-	9, // [9:10] is the sub-list for method output_type
-	8, // [8:9] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	3,  // 0: agent.CPU.CPUPercent:type_name -> agent.CPUPercent
+	6,  // 1: agent.TopProc.Process:type_name -> agent.Process
+	2,  // 2: agent.ServerStat.cpu:type_name -> agent.CPU
+	0,  // 3: agent.ServerStat.la:type_name -> agent.LA
+	1,  // 4: agent.ServerStat.mem:type_name -> agent.Mem
+	4,  // 5: agent.ServerStat.disk:type_name -> agent.Disk
+	5,  // 6: agent.ServerStat.top_proc:type_name -> agent.TopProc
+	7,  // 7: agent.GetServerStatResponse.serverStat:type_name -> agent.ServerStat
+	8,  // 8: agent.agent.GetServerStat:input_type -> agent.GetServerStatRequest
+	11, // 9: agent.agent.Ping:input_type -> agent.PingRequest
+	9,  // 10: agent.agent.GetServerStat:output_type -> agent.GetServerStatResponse
+	12, // 11: agent.agent.Ping:output_type -> agent.PingResponse
+	10, // [10:12] is the sub-list for method output_type
+	8,  // [8:10] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_proto_agent_proto_init() }
@@ -1083,6 +1168,30 @@ func file_proto_agent_proto_init() {
 				return nil
 			}
 		}
+		file_proto_agent_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PingRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_agent_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PingResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1090,7 +1199,7 @@ func file_proto_agent_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_agent_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   11,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

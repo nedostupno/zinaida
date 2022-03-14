@@ -142,6 +142,10 @@ func RunServer(cfg *config.AgentConfig) {
 	}
 }
 
+func (s server) Ping(ctx context.Context, r *agent.PingRequest) (*agent.PingResponse, error) {
+	return &agent.PingResponse{}, nil
+}
+
 func (s server) GetServerStat(ctx context.Context, r *agent.GetServerStatRequest) (*agent.GetServerStatResponse, error) {
 	cpu, err := stat.GetCPUPercent()
 	if err != nil {

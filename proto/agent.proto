@@ -83,4 +83,9 @@ message Void {}
 
 service agent {
     rpc GetServerStat (GetServerStatRequest) returns (GetServerStatResponse);
+    rpc Ping (PingRequest) returns (PingResponse);
 }
+
+message PingRequest {}
+  
+message PingResponse {}
