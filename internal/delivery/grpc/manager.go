@@ -129,7 +129,7 @@ func GetStat(ip string, port int) (*agent.GetServerStatResponse, error) {
 	// fmt.Println(resp)
 }
 
-func Ping(ip string, port int) (*agent.PingResponse, error) {
+func Ping(ip string, port int, timeout int) (*agent.PingResponse, error) {
 	conn, err := grpc.Dial(fmt.Sprintf("%v:%d", ip, port), grpc.WithInsecure())
 	if err != nil {
 		return nil, err
@@ -138,7 +138,7 @@ func Ping(ip string, port int) (*agent.PingResponse, error) {
 
 	c := agent.NewAgentClient(conn)
 	r := &agent.PingRequest{}
-	cntx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+	cntx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer cancel()
 
 	resp, err := c.Ping(cntx, r)
