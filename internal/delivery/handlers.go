@@ -124,6 +124,7 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			if r, ok := err.(*net.DNSError); ok && r.IsNotFound {
 				JsonError(w, fmt.Sprintf("Не удалось получить информацию о домене %s", n.Domain), http.StatusOK)
+				return
 			}
 			a.logger.WithRestApiErrorFields(r, err).Errorf("Не удалось узнать ip для домена: %s", n.Domain)
 			JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
