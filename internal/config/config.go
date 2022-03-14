@@ -23,9 +23,10 @@ type ManagerConfig struct {
 		Port int    `yaml:"port" env-default:"8000"`
 	} `yaml:"rest"`
 	Grpc struct {
-		Ip         string `yaml:"ip" env-default:"0.0.0.0"`
-		Port       int    `yaml:"port" env-default:"42222"`
-		AgentsPort int    `yaml:"agents_port" env-default:"24444"`
+		Ip          string `yaml:"ip" env-default:"0.0.0.0"`
+		Port        int    `yaml:"port" env-default:"42222"`
+		AgentsPort  int    `yaml:"agents_port" env-default:"24444"`
+		PingTimeout int    `yaml:"ping_timeout" env-default:"5"`
 	} `yaml:"gRPC"`
 }
 
