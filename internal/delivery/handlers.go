@@ -109,7 +109,7 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&n); err != nil {
 		a.logger.WithRestApiErrorFields(r, err).Error("не удалось декодировать структуру r.Body")
-		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+		JsonError(w, "Не удалось обработать преданные данные", http.StatusInternalServerError)
 		return
 	}
 	defer r.Body.Close()
@@ -317,7 +317,7 @@ func (a *api) Login(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&creds)
 	if err != nil {
 		a.logger.WithRestApiErrorFields(r, err).Error("не удалось декодировать структуру r.Body")
-		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+		JsonError(w, "Не удалось обработать преданные данные", http.StatusInternalServerError)
 		return
 	}
 	defer r.Body.Close()
@@ -376,7 +376,7 @@ func (a *api) Refresh(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&refresh)
 	if err != nil {
 		a.logger.WithRestApiErrorFields(r, err).Error("не удалось декодировать структуру r.Body")
-		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+		JsonError(w, "Не удалось обработать преданные данные", http.StatusInternalServerError)
 		return
 	}
 
