@@ -131,9 +131,6 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		//TODO: Если ip пустой, то нужно будет по ip домена выполнить проверку через gRPC.Ping
-		// и если ответа от сервера не последует, то сообщить, что на сервере, на который указывает домен
-		//  не запущена нода-агент
 		if n.Ip == "" {
 			n.Ip = resolvedIPs[0]
 		}
@@ -150,7 +147,12 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	//TODO: grpc.Ping по n.IP
+
+	_, err := grpc.Ping(n.Ip, a.cfg.Grpc.AgentsPort, a.cfg.Grpc.PingTimeout)
+	if err != nil {
+		JsonError(w, "Не удалось соединиться с нодой-агентов, данные о которой вы передали", 200)
+		return
+	}
 
 	isExistByDomain, err := a.repo.Nodes.CheckNodeExistenceByDomain(n.Domain)
 	if err != nil {
@@ -175,8 +177,6 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: если передан пустой ip, то необходимо по домену определить ip адрес,
-	// и если определить ip не удастся, то ноду в базу данных не добавляем
 	_, err = a.repo.AddNode(n.Ip, n.Domain)
 	if err != nil {
 		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось добавить ноду %v в мониторинг", n)
