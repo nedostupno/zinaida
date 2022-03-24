@@ -150,7 +150,12 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 
 	_, err := grpc.Ping(n.Ip, a.cfg.Grpc.AgentsPort, a.cfg.Grpc.PingTimeout)
 	if err != nil {
-		JsonError(w, "Не удалось соединиться с нодой-агентов, данные о которой вы передали", 200)
+		msg := map[string]interface{}{
+			"success": true,
+			"message": "Не удалось соединиться с нодой-агентом, данные о которой вы передали",
+			"node":    n,
+		}
+		utils.Respond(w, msg, http.StatusOK)
 		return
 	}
 
@@ -282,19 +287,25 @@ func (a *api) GetStat(w http.ResponseWriter, r *http.Request) {
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
-	//TODO: Добавить gRPC ping, чтобы проверять запущена ли нода агент и не падать с ошибкой
+	_, err = grpc.Ping(node.Ip, a.cfg.Grpc.AgentsPort, a.cfg.Grpc.PingTimeout)
+	if err != nil {
+
+		msg := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("Не удалось установить соединение с нодой-агентом с id %d", node.Id),
+			"node":    node,
+			"stat":    nil,
+		}
+		utils.Respond(w, msg, http.StatusOK)
+		return
+	}
+
 	resp, err := grpc.GetStat(node.Ip, a.cfg.Grpc.AgentsPort)
 	if err != nil {
 		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось получить статистику по grpc о ноде %v", node)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
-	// jsnResp, err := json.Marshal(resp)
-	// if err != nil {
-	// 	a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось замаршалить структуру resp %v в json", resp)
-	// 	JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
-	// 	return
-	// }
 
 	msg := map[string]interface{}{
 		"success": true,
