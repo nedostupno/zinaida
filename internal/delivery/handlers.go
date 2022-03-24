@@ -6,6 +6,8 @@ import (
 	"net"
 	"net/http"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -352,7 +354,8 @@ func (a *api) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if creds.Username == user.Username && creds.Password == user.Password {
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(creds.Password))
+	if creds.Username == user.Username && err == nil {
 		jwt, err := auth.GenerateJWTToken(user.Username, a.cfg.Jwt.SecretKeyForAccessToken, a.cfg.Jwt.AccessTokenTTL)
 		if err != nil {
 			a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось сгенерировать JWT access токен для пользователя %s", user.Username)
