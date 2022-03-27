@@ -61,6 +61,7 @@ type (
 
 	loggingResponseWriter struct {
 		http.ResponseWriter
+		http.Hijacker
 		responseData *responseData
 	}
 )
@@ -84,8 +85,15 @@ func (a *api) LoggingMidleware(h http.Handler) http.Handler {
 			status: 0,
 			size:   0,
 		}
+
+		hij, ok := w.(http.Hijacker)
+		if !ok {
+			a.logger.WhithErrorFields(fmt.Errorf("websocket: responseWriter does not implement http.Hijacker")).Fatal()
+		}
+
 		lrw := loggingResponseWriter{
 			ResponseWriter: w,
+			Hijacker:       hij,
 			responseData:   responseData,
 		}
 
