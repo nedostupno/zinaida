@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os/exec"
 
 	"github.com/nedostupno/zinaida/internal/config"
 	"github.com/nedostupno/zinaida/proto/agent"
@@ -144,6 +145,17 @@ func RunServer(cfg *config.AgentConfig) {
 
 func (s server) Ping(ctx context.Context, r *agent.PingRequest) (*agent.PingResponse, error) {
 	return &agent.PingResponse{}, nil
+}
+
+func (s server) Reboot(ctx context.Context, r *agent.RebootRequest) (*agent.RebootResponse, error) {
+
+	cmd := exec.Command("shutdown", "-r")
+	err := cmd.Run()
+	if err != nil {
+		return nil, err
+	}
+
+	return &agent.RebootResponse{}, nil
 }
 
 func (s server) GetServerStat(ctx context.Context, r *agent.GetServerStatRequest) (*agent.GetServerStatResponse, error) {
