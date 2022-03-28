@@ -353,14 +353,13 @@ func (a *api) RebootNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := grpc.RebootNode(node.Ip, a.cfg.Grpc.AgentsPort)
+	_, err = grpc.RebootNode(node.Ip, a.cfg.Grpc.AgentsPort)
 	if err != nil {
 		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось выполнить перезагрузку ноды-агента с id %s", id)
 		msg := map[string]interface{}{
 			"success": false,
 			"message": fmt.Sprintf("Не удалось выполнить перезагрузку ноды-агента с id %d", node.Id),
 			"node":    node,
-			"stat":    nil,
 		}
 		utils.Respond(w, msg, http.StatusOK)
 		return
@@ -370,7 +369,6 @@ func (a *api) RebootNode(w http.ResponseWriter, r *http.Request) {
 		"success": true,
 		"message": fmt.Sprintf("Нода-агент с id %d будет перезагружена через 1 минуту", node.Id),
 		"node":    node,
-		"stat":    resp,
 	}
 	utils.Respond(w, msg, http.StatusOK)
 }
