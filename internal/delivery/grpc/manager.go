@@ -147,3 +147,20 @@ func Ping(ip string, port int, timeout int) (*agent.PingResponse, error) {
 	}
 	return resp, nil
 }
+
+func RebootNode(ip string, port int) (*agent.RebootResponse, error) {
+	conn, err := grpc.Dial(fmt.Sprintf("%v:%d", ip, port), grpc.WithInsecure())
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	c := agent.NewAgentClient(conn)
+	r := &agent.RebootRequest{}
+
+	resp, err := c.Reboot(context.Background(), r)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
