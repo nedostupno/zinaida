@@ -319,8 +319,60 @@ func (a *api) GetStat(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *api) RebootNode(w http.ResponseWriter, r *http.Request) {
-	// TODO: Реализовать перезагрузку ноды-агента
-	w.Write([]byte("Handler RebootNode not implemented"))
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	isExist, err := a.repo.Nodes.CheckNodeExistenceByID(id)
+	if err != nil {
+		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось проверить наличие ноды с id %s в базе данных", id)
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+		return
+	}
+
+	if !isExist {
+		JsonError(w, "Ноды агента с таким id не найдено в мониторинге", http.StatusNotFound)
+		return
+	}
+
+	node, err := a.repo.GetNodeByID(id)
+	if err != nil {
+		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось получить ноду с id %s из базы данных", id)
+		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+		return
+	}
+	_, err = grpc.Ping(node.Ip, a.cfg.Grpc.AgentsPort, a.cfg.Grpc.PingTimeout)
+	if err != nil {
+
+		msg := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("Не удалось установить соединение с нодой-агентом с id %d", node.Id),
+			"node":    node,
+			"stat":    nil,
+		}
+		utils.Respond(w, msg, http.StatusOK)
+		return
+	}
+
+	resp, err := grpc.RebootNode(node.Ip, a.cfg.Grpc.AgentsPort)
+	if err != nil {
+		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось выполнить перезагрузку ноды-агента с id %s", id)
+		msg := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("Не удалось выполнить перезагрузку ноды-агента с id %d", node.Id),
+			"node":    node,
+			"stat":    nil,
+		}
+		utils.Respond(w, msg, http.StatusOK)
+		return
+	}
+
+	msg := map[string]interface{}{
+		"success": true,
+		"message": fmt.Sprintf("Нода-агент с id %d будет перезагружена через 1 минуту", node.Id),
+		"node":    node,
+		"stat":    resp,
+	}
+	utils.Respond(w, msg, http.StatusOK)
 }
 
 func (a *api) Login(w http.ResponseWriter, r *http.Request) {
