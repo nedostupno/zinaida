@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AgentClient interface {
 	GetServerStat(ctx context.Context, in *GetServerStatRequest, opts ...grpc.CallOption) (*GetServerStatResponse, error)
+	Reboot(ctx context.Context, in *RebootRequest, opts ...grpc.CallOption) (*RebootResponse, error)
 	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error)
 }
 
@@ -43,6 +44,15 @@ func (c *agentClient) GetServerStat(ctx context.Context, in *GetServerStatReques
 	return out, nil
 }
 
+func (c *agentClient) Reboot(ctx context.Context, in *RebootRequest, opts ...grpc.CallOption) (*RebootResponse, error) {
+	out := new(RebootResponse)
+	err := c.cc.Invoke(ctx, "/agent.agent/Reboot", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *agentClient) Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error) {
 	out := new(PingResponse)
 	err := c.cc.Invoke(ctx, "/agent.agent/Ping", in, out, opts...)
@@ -57,6 +67,7 @@ func (c *agentClient) Ping(ctx context.Context, in *PingRequest, opts ...grpc.Ca
 // for forward compatibility
 type AgentServer interface {
 	GetServerStat(context.Context, *GetServerStatRequest) (*GetServerStatResponse, error)
+	Reboot(context.Context, *RebootRequest) (*RebootResponse, error)
 	Ping(context.Context, *PingRequest) (*PingResponse, error)
 	mustEmbedUnimplementedAgentServer()
 }
@@ -67,6 +78,9 @@ type UnimplementedAgentServer struct {
 
 func (UnimplementedAgentServer) GetServerStat(context.Context, *GetServerStatRequest) (*GetServerStatResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetServerStat not implemented")
+}
+func (UnimplementedAgentServer) Reboot(context.Context, *RebootRequest) (*RebootResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Reboot not implemented")
 }
 func (UnimplementedAgentServer) Ping(context.Context, *PingRequest) (*PingResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
@@ -102,6 +116,24 @@ func _Agent_GetServerStat_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Agent_Reboot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RebootRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServer).Reboot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/agent.agent/Reboot",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServer).Reboot(ctx, req.(*RebootRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Agent_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PingRequest)
 	if err := dec(in); err != nil {
@@ -130,6 +162,10 @@ var Agent_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetServerStat",
 			Handler:    _Agent_GetServerStat_Handler,
+		},
+		{
+			MethodName: "Reboot",
+			Handler:    _Agent_Reboot_Handler,
 		},
 		{
 			MethodName: "Ping",
