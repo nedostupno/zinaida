@@ -22,9 +22,10 @@ type Credential struct {
 }
 
 type NodeAgent struct {
-	Id     int    `json:"id"`
-	Ip     string `json:"ip"`
-	Domain string `json:"domain"`
+	Id          int    `json:"id"`
+	Ip          string `json:"ip"`
+	Domain      string `json:"domain"`
+	Unreachable int    `json:"unreachable"`
 }
 
 type CPU struct {

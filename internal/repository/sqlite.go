@@ -21,7 +21,8 @@ func NewSqliteDB() (*sql.DB, error) {
 	db.Exec(`CREATE TABLE if not exists Nodes (
 		id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, 
 		ip TEXT,
-		domain TEXT
+		domain TEXT,
+		unreachable INTEGER
 	  )`)
 
 	return db, nil

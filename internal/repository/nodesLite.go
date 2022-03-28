@@ -16,7 +16,7 @@ func NewNodesLite(db *sql.DB) *NodesLite {
 }
 
 func (n *NodesLite) AddNode(ip string, domain string) (sql.Result, error) {
-	result, err := n.db.Exec("insert into Nodes (ip, domain) values ($1, $2)",
+	result, err := n.db.Exec("insert into Nodes (ip, domain, unreachable) values ($1, $2, 0)",
 		ip, domain)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (n *NodesLite) ListAllNodes() ([]models.NodeAgent, error) {
 	allNodes := []models.NodeAgent{}
 	for rows.Next() {
 		a := models.NodeAgent{}
-		err := rows.Scan(&a.Id, &a.Ip, &a.Domain)
+		err := rows.Scan(&a.Id, &a.Ip, &a.Domain, &a.Unreachable)
 		if err != nil {
 			return nil, err
 		}
@@ -52,7 +52,7 @@ func (n *NodesLite) ListAllNodes() ([]models.NodeAgent, error) {
 func (n *NodesLite) GetNodeByIP(ip string) (models.NodeAgent, error) {
 	row := n.db.QueryRow("SELECT * FROM Nodes WHERE ip = $1", ip)
 	node := models.NodeAgent{}
-	err := row.Scan(&node.Id, &node.Ip, &node.Domain)
+	err := row.Scan(&node.Id, &node.Ip, &node.Domain, &node.Unreachable)
 	if err != nil {
 		return models.NodeAgent{}, err
 	}
@@ -62,7 +62,7 @@ func (n *NodesLite) GetNodeByIP(ip string) (models.NodeAgent, error) {
 func (n *NodesLite) GetNodeByID(id string) (models.NodeAgent, error) {
 	row := n.db.QueryRow("SELECT * FROM Nodes WHERE id = $1", id)
 	node := models.NodeAgent{}
-	err := row.Scan(&node.Id, &node.Ip, &node.Domain)
+	err := row.Scan(&node.Id, &node.Ip, &node.Domain, &node.Unreachable)
 	if err != nil {
 		return models.NodeAgent{}, err
 	}
