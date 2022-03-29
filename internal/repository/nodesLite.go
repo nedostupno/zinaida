@@ -115,3 +115,17 @@ func (n *NodesLite) GetAllNodesIP() ([]string, error) {
 	}
 	return ips, nil
 }
+
+func (u *NodesLite) GetNodeUnreachableCounter(id int) (int, error) {
+	row := u.db.QueryRow("SELECT unreachable FROM Nodes WHERE id = $1", id)
+	var unreachable int
+	err := row.Scan(&unreachable)
+	if err != nil {
+		return 0, err
+	}
+	return unreachable, nil
+}
+
+func (u *NodesLite) UpdateNodeUnreachableCounter(id int, value int) (sql.Result, error) {
+	return u.db.Exec("UPDATE Nodes SET unreachable = $1 WHERE id = $2", value, id)
+}

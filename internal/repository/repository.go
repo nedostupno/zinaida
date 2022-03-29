@@ -23,6 +23,8 @@ type Nodes interface {
 	CheckNodeExistenceByID(id string) (bool, error)
 	CheckNodeExistenceByDomain(domain string) (bool, error)
 	GetAllNodesIP() ([]string, error)
+	GetNodeUnreachableCounter(id int) (int, error)
+	UpdateNodeUnreachableCounter(id int, value int) (sql.Result, error)
 }
 
 type Repository struct {
