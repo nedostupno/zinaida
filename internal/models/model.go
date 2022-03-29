@@ -49,3 +49,8 @@ type User struct {
 	Password      string
 	Refresh_token string
 }
+
+type TraceResult struct {
+	Addr        string
+	Unreachable bool
+}
