@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/nedostupno/zinaida/internal/config"
+	"github.com/nedostupno/zinaida/internal/models"
 )
 
 type Tracer struct {
@@ -90,7 +91,7 @@ func (t *Tracer) SetOptions(cfg *config.ManagerConfig) {
 	}
 }
 
-func (t *Tracer) Traceroute(id int, dest string, c chan Hop) error {
+func (t *Tracer) Traceroute(id int, dest string, c chan Hop, result chan models.TraceResult) error {
 	destAddr, err := t.parseDestAddress(dest)
 	if err != nil {
 		return err
@@ -149,6 +150,10 @@ func (t *Tracer) Traceroute(id int, dest string, c chan Hop) error {
 			}
 
 			if ttl > t.options.maxHops {
+				result <- models.TraceResult{
+					Addr:        fmt.Sprintf("%v.%v.%v.%v", destAddr[0], destAddr[1], destAddr[2], destAddr[3]),
+					Unreachable: true,
+				}
 				break
 			}
 			continue
@@ -178,6 +183,10 @@ func (t *Tracer) Traceroute(id int, dest string, c chan Hop) error {
 		retry = 0
 
 		if ttl > t.options.maxHops || address == destAddr {
+			result <- models.TraceResult{
+				Addr:        fmt.Sprintf("%v.%v.%v.%v", destAddr[0], destAddr[1], destAddr[2], destAddr[3]),
+				Unreachable: false,
+			}
 			break
 		}
 	}

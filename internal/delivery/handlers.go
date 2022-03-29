@@ -68,15 +68,51 @@ func (a *api) GetMap(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	hops := make(chan traceroute.Hop, 15)
+	result := make(chan models.TraceResult)
 	go func() {
 		defer close(hops)
 		for i, domain := range destinations {
 			t := traceroute.NewTracer(a.cfg)
-			err := t.Traceroute(i, domain, hops)
+			err := t.Traceroute(i, domain, hops, result)
 			if err != nil {
 				a.logger.WithRestApiErrorFields(r, err).Errorf("Не удалось построить трассировку до ноды %v", domain)
 				JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 				return
+			}
+		}
+	}()
+
+	go func() {
+		for res := range result {
+
+			node, err := a.repo.Nodes.GetNodeByIP(string(res.Addr))
+			if err != nil {
+				a.logger.WithRestApiErrorFields(r, err).Errorf("Не удалось получить из базы данных ноду с ip %v", res.Addr)
+				JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+				return
+			}
+
+			cnt, err := a.repo.Nodes.GetNodeUnreachableCounter(node.Id)
+			if err != nil {
+				a.logger.WithRestApiErrorFields(r, err).Errorf("Не удалось получить из базы данных значение поля Unreachable для ноды с id %v", node.Id)
+				JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+				return
+			}
+
+			if res.Unreachable {
+				_, err := a.repo.Nodes.UpdateNodeUnreachableCounter(node.Id, cnt+1)
+				if err != nil {
+					a.logger.WithRestApiErrorFields(r, err).Errorf("Не удалось изменить в базе данных значение поля Unreachable для ноды с id %v", node.Id)
+					JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+					return
+				}
+			} else {
+				_, err := a.repo.Nodes.UpdateNodeUnreachableCounter(node.Id, 0)
+				if err != nil {
+					a.logger.WithRestApiErrorFields(r, err).Errorf("Не удалось изменить в базе данных значение поля Unreachable для ноды с id %v", node.Id)
+					JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
+					return
+				}
 			}
 		}
 	}()
