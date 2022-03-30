@@ -490,7 +490,7 @@ func (a *api) Login(w http.ResponseWriter, r *http.Request) {
 		utils.Respond(w, msg, http.StatusOK)
 		return
 	}
-	JsonError(w, "Переданы некорреткные данные", http.StatusUnauthorized)
+	JsonError(w, "Переданы некорректные данные", http.StatusUnauthorized)
 }
 
 func (a *api) Refresh(w http.ResponseWriter, r *http.Request) {

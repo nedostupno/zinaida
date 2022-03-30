@@ -103,7 +103,7 @@ func Registrate(cfg *config.AgentConfig) error {
 		}
 
 		if !ipDomainIsCorrect {
-			log.Fatal("Домен смотрит не туда")
+			log.Fatal("Указанный в конфиге домен не направлен на сервер ноды агента")
 		}
 
 		r.Domain = domain

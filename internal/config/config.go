@@ -1,6 +1,11 @@
 package config
 
 import (
+	"fmt"
+	"net"
+	"regexp"
+	"unicode/utf8"
+
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
@@ -48,6 +53,13 @@ func GetManagerConfig() (*ManagerConfig, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if r := net.ParseIP(cfg.Rest.Ip); r == nil {
+		return nil, fmt.Errorf("в manager_config.yaml для rest указан не валидный ip адрес")
+	}
+	if r := net.ParseIP(cfg.Grpc.Ip); r == nil {
+		return nil, fmt.Errorf("в manager_config.yaml для grpc указан не валидный ip адрес")
+	}
 	return &cfg, nil
 }
 
@@ -56,6 +68,27 @@ func GetAgentConfig() (*AgentConfig, error) {
 	err := cleanenv.ReadConfig("agent_config.yaml", &cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if r := net.ParseIP(cfg.Agent.Ip); r == nil {
+		return nil, fmt.Errorf("в agent_config.yaml для agent указан не валидный ip адрес")
+	}
+
+	if r := net.ParseIP(cfg.Manager.Ip); r == nil {
+		return nil, fmt.Errorf("в agent_config.yaml для manager указан не валидный ip адрес")
+	}
+
+	reg, err := regexp.Compile(`^([A-Za-zА-Яа-я0-9-]{1,63}\.)+[A-Za-zА-Яа-я0-9]{2,6}$`)
+	if err != nil {
+		return nil, fmt.Errorf("не удалось скомпилировать регулярное выражение")
+	}
+	ok := reg.MatchString(cfg.Agent.Domain)
+	if !ok {
+		return nil, fmt.Errorf("в agent_config.yaml для agent указан не валидный домен")
+	}
+	len := utf8.RuneCountInString(cfg.Agent.Domain)
+	if len > 253 {
+		return nil, fmt.Errorf("в agent_config.yaml для agent указан не валидный домен")
 	}
 	return &cfg, nil
 }
