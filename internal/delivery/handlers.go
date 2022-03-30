@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"regexp"
+	"unicode/utf8"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -153,11 +155,27 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	if n.Domain == "" && n.Ip == "" {
-		JsonError(w, "Переданы некорректные данные", http.StatusBadRequest)
+		JsonError(w, "Не были переданы ни домен, ни ip адрес", http.StatusBadRequest)
 		return
 	}
 
 	if n.Domain != "" {
+		reg, err := regexp.Compile(`^([A-Za-zА-Яа-я0-9-]{1,63}\.)+[A-Za-zА-Яа-я0-9]{2,6}$`)
+		if err != nil {
+			a.logger.WithRestApiErrorFields(r, err).Error("не удалось скомпилировать шаблон для регулярного выражения")
+			JsonError(w, "Возникла непредвиденная ошибка", http.StatusInternalServerError)
+			return
+		}
+		okk := reg.MatchString(n.Domain)
+		if !okk {
+			JsonError(w, "Домен не валиден", http.StatusBadRequest)
+			return
+		}
+		len := utf8.RuneCountInString(n.Domain)
+		if len > 253 {
+			JsonError(w, "Домен слишком длинный", http.StatusBadRequest)
+			return
+		}
 		resolvedIPs, err := net.LookupHost(n.Domain)
 		if err != nil {
 			if r, ok := err.(*net.DNSError); ok && r.IsNotFound {
@@ -184,6 +202,11 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 			JsonError(w, "Указанный ip адрес и ip адрес из ресурсных записей домена отличаются", http.StatusBadRequest)
 			return
 		}
+	}
+
+	if r := net.ParseIP(n.Ip); r == nil {
+		JsonError(w, "Указанный ip адрес не валиден", http.StatusBadRequest)
+		return
 	}
 
 	_, err := grpc.Ping(n.Ip, a.cfg.Grpc.AgentsPort, a.cfg.Grpc.PingTimeout)
