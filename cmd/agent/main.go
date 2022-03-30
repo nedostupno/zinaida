@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"os/exec"
 
 	"github.com/nedostupno/zinaida/internal/config"
+	"github.com/nedostupno/zinaida/logger"
 	"github.com/nedostupno/zinaida/proto/agent"
 	"github.com/nedostupno/zinaida/proto/manager"
 	"github.com/nedostupno/zinaida/stat"
@@ -16,19 +16,21 @@ import (
 )
 
 func main() {
+	log := logger.GetLogger()
+
 	cfg, err := config.GetAgentConfig()
 	if err != nil {
-		log.Fatal(err)
+		log.WhithErrorFields(err).Fatal("не удалось получить конфигурацию")
 	}
 
-	RunServer(cfg)
+	RunServer(cfg, log)
 }
 
 func Registrate(cfg *config.AgentConfig) error {
 	addr := fmt.Sprintf("%s:%d", cfg.Manager.Ip, cfg.Manager.Port)
 	conn, err := grpc.Dial(addr, grpc.WithInsecure())
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer conn.Close()
 
@@ -42,7 +44,7 @@ func Registrate(cfg *config.AgentConfig) error {
 	// Получаем адреса на поднятых интерфейсах
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// Получаем слайс ip адрессов, поднятных на интерфейсх, кроме loopback
@@ -57,8 +59,7 @@ func Registrate(cfg *config.AgentConfig) error {
 	}
 
 	if len(ipOnInerfaces) == 0 {
-		err = errors.New("не обнаружено ни одного ipv4 адреса на интерфейсах кроме loopback")
-		log.Fatal(err)
+		return errors.New("не обнаружено ни одного ipv4 адреса на интерфейсах кроме loopback")
 	}
 
 	// Проверяем является ли переданный ip одним из ip поднятых на интерфейсах
@@ -83,10 +84,9 @@ func Registrate(cfg *config.AgentConfig) error {
 		ips, err := net.LookupHost(domain)
 		if err != nil {
 			if r, ok := err.(*net.DNSError); ok && r.IsNotFound {
-				log.Fatalln("Передан не существующий домен")
+				return fmt.Errorf("в конфиге передан не существующий домен %s", domain)
 			}
-			log.Fatal("Не удалось узнать ip домена")
-			return err
+			return fmt.Errorf("не удалось узнать ip домена %s : %+v", domain, err)
 		}
 
 		var ipDomainIsCorrect bool
@@ -103,19 +103,18 @@ func Registrate(cfg *config.AgentConfig) error {
 		}
 
 		if !ipDomainIsCorrect {
-			log.Fatal("Указанный в конфиге домен не направлен на сервер ноды агента")
+			return fmt.Errorf("указанный в конфиге домен %s не направлен на сервер ноды агента", domain)
 		}
 
 		r.Domain = domain
 		r.Ip = ips[ipIndex]
 	}
 
-	resp, err := c.Registrate(context.Background(), r)
+	_, err = c.Registrate(context.Background(), r)
 	if err != nil {
-		log.Printf("не удалось зарегистрировать ноду c данными: %v. Ошибка: %v", r, err)
+		return fmt.Errorf("не удалось зарегистрировать ноду c данными: %v. Ошибка: %v", r, err)
 	}
 
-	fmt.Println(resp)
 	return nil
 }
 
@@ -123,23 +122,25 @@ type server struct {
 	agent.UnimplementedAgentServer
 }
 
-func RunServer(cfg *config.AgentConfig) {
+func RunServer(cfg *config.AgentConfig, log *logger.Logger) {
 	srv := grpc.NewServer()
 	port := cfg.Agent.Port
 	ip := cfg.Agent.Ip
 
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", ip, port))
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.WhithErrorFields(err).Fatalf("failed to listen on %s:%d", ip, port)
 	}
 
 	var s server
 	agent.RegisterAgentServer(srv, s)
 
-	Registrate(cfg)
-
+	err = Registrate(cfg)
+	if err != nil {
+		log.WhithErrorFields(err).Fatal("Не удалось автоматически зарегистрироваться у ноды менеджера")
+	}
 	if err := srv.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %s", err)
+		log.WhithErrorFields(err).Fatalf("failed to serve with listen: %v", lis)
 	}
 }
 
