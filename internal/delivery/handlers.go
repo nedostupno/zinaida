@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"regexp"
+	"strconv"
 	"unicode/utf8"
 
 	"golang.org/x/crypto/bcrypt"
@@ -267,7 +268,11 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 
 func (a *api) GetNodeInfo(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id := vars["id"]
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		JsonError(w, "Ноды агента с таким id не найдено в мониторинге", http.StatusNotFound)
+		return
+	}
 
 	isExist, err := a.repo.Nodes.CheckNodeExistenceByID(id)
 	if err != nil {
@@ -298,7 +303,11 @@ func (a *api) GetNodeInfo(w http.ResponseWriter, r *http.Request) {
 
 func (a *api) DeleteNode(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id := vars["id"]
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		JsonError(w, "Ноды агента с таким id не найдено в мониторинге", http.StatusNotFound)
+		return
+	}
 
 	isExist, err := a.repo.Nodes.CheckNodeExistenceByID(id)
 	if err != nil {
@@ -321,14 +330,18 @@ func (a *api) DeleteNode(w http.ResponseWriter, r *http.Request) {
 
 	msg := map[string]interface{}{
 		"success": true,
-		"message": fmt.Sprintf("Нода-агент с id %s успешно удалена из мониторинга", id),
+		"message": fmt.Sprintf("Нода-агент с id %d успешно удалена из мониторинга", id),
 	}
 	utils.Respond(w, msg, http.StatusOK)
 }
 
 func (a *api) GetStat(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id := vars["id"]
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		JsonError(w, "Ноды агента с таким id не найдено в мониторинге", http.StatusNotFound)
+		return
+	}
 
 	isExist, err := a.repo.Nodes.CheckNodeExistenceByID(id)
 	if err != nil {
@@ -379,7 +392,11 @@ func (a *api) GetStat(w http.ResponseWriter, r *http.Request) {
 
 func (a *api) RebootNode(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id := vars["id"]
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		JsonError(w, "Ноды агента с таким id не найдено в мониторинге", http.StatusNotFound)
+		return
+	}
 
 	isExist, err := a.repo.Nodes.CheckNodeExistenceByID(id)
 	if err != nil {
