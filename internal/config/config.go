@@ -29,10 +29,11 @@ type ManagerConfig struct {
 		ShutdownTimeout int    `yaml:"shutdown_timeout_ms" env-default:"8000"`
 	} `yaml:"rest"`
 	Grpc struct {
-		Ip          string `yaml:"ip" env-default:"0.0.0.0"`
-		Port        int    `yaml:"port" env-default:"42222"`
-		AgentsPort  int    `yaml:"agents_port" env-default:"24444"`
-		PingTimeout int    `yaml:"ping_timeout" env-default:"5000"`
+		Ip             string `yaml:"ip" env-default:"0.0.0.0"`
+		Port           int    `yaml:"port" env-default:"42222"`
+		AgentsPort     int    `yaml:"agents_port" env-default:"24444"`
+		PingTimeout    int    `yaml:"ping_timeout" env-default:"5000"`
+		GetStatTimeout int    `yaml:"get_stat_timeout" env-default:"5000"`
 	} `yaml:"gRPC"`
 }
 
@@ -42,9 +43,10 @@ type AgentConfig struct {
 		Port int    `yaml:"port" env-default:"42222"`
 	} `yaml:"manager"`
 	Agent struct {
-		Ip     string `yaml:"ip" env-default:"0.0.0.0"`
-		Port   int    `yaml:"port" env-default:"24444"`
-		Domain string `yaml:"domain"`
+		Ip                string `yaml:"ip" env-default:"0.0.0.0"`
+		Port              int    `yaml:"port" env-default:"24444"`
+		Domain            string `yaml:"domain"`
+		RegistrateTimeout int    `yaml:"registration_timeout" env-default:"5000"`
 	} `yaml:"agent"`
 }
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"os/exec"
+	"time"
 
 	"github.com/nedostupno/zinaida/proto/protoAgent"
 	"github.com/nedostupno/zinaida/proto/protoManager"
@@ -97,7 +98,10 @@ func (s *server) Registrate() error {
 		r.Ip = ips[ipIndex]
 	}
 
-	_, err = c.Registrate(context.Background(), r)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.cfg.Agent.RegistrateTimeout)*time.Millisecond)
+	defer cancel()
+
+	_, err = c.Registrate(ctx, r)
 	if err != nil {
 		return fmt.Errorf("failed to register node: %v. Error: %v", r, err)
 	}

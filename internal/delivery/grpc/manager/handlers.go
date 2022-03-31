@@ -75,7 +75,9 @@ func (s *Server) GetStat(ip string, port int) (*protoAgent.GetServerStatResponse
 	c := protoAgent.NewAgentClient(conn)
 	r := &protoAgent.GetServerStatRequest{}
 
-	resp, err := c.GetServerStat(context.Background(), r)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.cfg.Grpc.GetStatTimeout)*time.Millisecond)
+	defer cancel()
+	resp, err := c.GetServerStat(ctx, r)
 	if err != nil {
 		return nil, err
 	}
@@ -91,10 +93,10 @@ func (s *Server) Ping(ip string, port int, timeout int) (*protoAgent.PingRespons
 
 	c := protoAgent.NewAgentClient(conn)
 	r := &protoAgent.PingRequest{}
-	cntx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Millisecond)
 	defer cancel()
 
-	resp, err := c.Ping(cntx, r)
+	resp, err := c.Ping(ctx, r)
 	if err != nil {
 		return nil, err
 	}
