@@ -14,5 +14,6 @@ func main() {
 		log.WhithErrorFields(err).Fatal("не удалось получить конфигурацию")
 	}
 
-	agent.RunServer(cfg, log)
+	srv := agent.NewAgentServer(log, cfg)
+	srv.RunServer()
 }

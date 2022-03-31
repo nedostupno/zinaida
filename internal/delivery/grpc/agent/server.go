@@ -11,27 +11,36 @@ import (
 )
 
 type server struct {
+	log *logger.Logger
+	cfg *config.AgentConfig
 	agent.UnimplementedAgentServer
 }
 
-func RunServer(cfg *config.AgentConfig, log *logger.Logger) {
+func NewAgentServer(log *logger.Logger, cfg *config.AgentConfig) *server {
+	return &server{
+		log:                      log,
+		cfg:                      cfg,
+		UnimplementedAgentServer: agent.UnimplementedAgentServer{},
+	}
+}
+
+func (s *server) RunServer() {
 	srv := grpc.NewServer()
-	port := cfg.Agent.Port
-	ip := cfg.Agent.Ip
+	port := s.cfg.Agent.Port
+	ip := s.cfg.Agent.Ip
 
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", ip, port))
 	if err != nil {
-		log.WhithErrorFields(err).Fatalf("failed to listen on %s:%d", ip, port)
+		s.log.WhithErrorFields(err).Fatalf("failed to listen on %s:%d", ip, port)
 	}
 
-	var s server
 	agent.RegisterAgentServer(srv, s)
 
-	err = Registrate(cfg)
+	err = Registrate(s.cfg)
 	if err != nil {
-		log.WhithErrorFields(err).Fatal("Не удалось автоматически зарегистрироваться у ноды менеджера")
+		s.log.WhithErrorFields(err).Fatal("Не удалось автоматически зарегистрироваться у ноды менеджера")
 	}
 	if err := srv.Serve(lis); err != nil {
-		log.WhithErrorFields(err).Fatalf("failed to serve with listen: %v", lis)
+		s.log.WhithErrorFields(err).Fatalf("failed to serve with listen: %v", lis)
 	}
 }
