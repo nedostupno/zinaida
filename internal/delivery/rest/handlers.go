@@ -212,7 +212,7 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 	_, err := a.grpc.Ping(n.Ip, a.cfg.Grpc.AgentsPort, a.cfg.Grpc.PingTimeout)
 	if err != nil {
 		msg := map[string]interface{}{
-			"success": true,
+			"success": false,
 			"message": "Failed to connect to agent node",
 			"node":    n,
 		}
@@ -233,11 +233,18 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	existNode, err := a.repo.GetNodeByIP(n.Ip)
+	if err != nil {
+		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to get node with ip %s from database ", n.Ip)
+		JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
+		return
+	}
+
 	if (isExistByDomain && n.Domain != "") || isExistByIP {
 		msg := map[string]interface{}{
 			"success": true,
 			"message": "Node agent is already exist in monitoring",
-			"node":    n,
+			"node":    existNode,
 		}
 		utils.Respond(w, msg, http.StatusOK)
 		return
