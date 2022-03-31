@@ -32,7 +32,7 @@ type ManagerConfig struct {
 		Ip          string `yaml:"ip" env-default:"0.0.0.0"`
 		Port        int    `yaml:"port" env-default:"42222"`
 		AgentsPort  int    `yaml:"agents_port" env-default:"24444"`
-		PingTimeout int    `yaml:"ping_timeout" env-default:"5"`
+		PingTimeout int    `yaml:"ping_timeout" env-default:"5000"`
 	} `yaml:"gRPC"`
 }
 

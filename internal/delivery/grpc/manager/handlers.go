@@ -91,7 +91,7 @@ func (s *Server) Ping(ip string, port int, timeout int) (*protoAgent.PingRespons
 
 	c := protoAgent.NewAgentClient(conn)
 	r := &protoAgent.PingRequest{}
-	cntx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+	cntx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Millisecond)
 	defer cancel()
 
 	resp, err := c.Ping(cntx, r)
