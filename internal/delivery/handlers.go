@@ -15,7 +15,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/nedostupno/zinaida/internal/auth"
-	"github.com/nedostupno/zinaida/internal/delivery/grpc"
+	"github.com/nedostupno/zinaida/internal/delivery/manager"
 	models "github.com/nedostupno/zinaida/internal/models"
 	"github.com/nedostupno/zinaida/internal/utils"
 	"github.com/nedostupno/zinaida/traceroute"
@@ -210,7 +210,7 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := grpc.Ping(n.Ip, a.cfg.Grpc.AgentsPort, a.cfg.Grpc.PingTimeout)
+	_, err := manager.Ping(n.Ip, a.cfg.Grpc.AgentsPort, a.cfg.Grpc.PingTimeout)
 	if err != nil {
 		msg := map[string]interface{}{
 			"success": true,
@@ -361,7 +361,7 @@ func (a *api) GetStat(w http.ResponseWriter, r *http.Request) {
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
-	_, err = grpc.Ping(node.Ip, a.cfg.Grpc.AgentsPort, a.cfg.Grpc.PingTimeout)
+	_, err = manager.Ping(node.Ip, a.cfg.Grpc.AgentsPort, a.cfg.Grpc.PingTimeout)
 	if err != nil {
 
 		msg := map[string]interface{}{
@@ -374,7 +374,7 @@ func (a *api) GetStat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := grpc.GetStat(node.Ip, a.cfg.Grpc.AgentsPort)
+	resp, err := manager.GetStat(node.Ip, a.cfg.Grpc.AgentsPort)
 	if err != nil {
 		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось получить статистику по grpc о ноде %v", node)
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
@@ -416,7 +416,7 @@ func (a *api) RebootNode(w http.ResponseWriter, r *http.Request) {
 		JsonError(w, "Произошла непредвиденная ошибка", http.StatusInternalServerError)
 		return
 	}
-	_, err = grpc.Ping(node.Ip, a.cfg.Grpc.AgentsPort, a.cfg.Grpc.PingTimeout)
+	_, err = manager.Ping(node.Ip, a.cfg.Grpc.AgentsPort, a.cfg.Grpc.PingTimeout)
 	if err != nil {
 
 		msg := map[string]interface{}{
@@ -429,7 +429,7 @@ func (a *api) RebootNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = grpc.RebootNode(node.Ip, a.cfg.Grpc.AgentsPort)
+	_, err = manager.RebootNode(node.Ip, a.cfg.Grpc.AgentsPort)
 	if err != nil {
 		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось выполнить перезагрузку ноды-агента с id %s", id)
 		msg := map[string]interface{}{

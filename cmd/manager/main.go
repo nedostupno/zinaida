@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/nedostupno/zinaida/internal/config"
 	api "github.com/nedostupno/zinaida/internal/delivery"
-	"github.com/nedostupno/zinaida/internal/delivery/grpc"
+	"github.com/nedostupno/zinaida/internal/delivery/manager"
 	"github.com/nedostupno/zinaida/internal/repository"
 	"github.com/nedostupno/zinaida/logger"
 )
@@ -22,7 +22,7 @@ func main() {
 	defer db.Close()
 
 	repo := repository.NewRepository(db)
-	go grpc.RunServer(repo, log, cfg)
+	go manager.RunServer(repo, log, cfg)
 
 	a := api.GetApi(repo, log, cfg)
 	a.InitRouter()
