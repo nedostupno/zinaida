@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/nedostupno/zinaida/internal/config"
+	"github.com/nedostupno/zinaida/internal/delivery/grpc/manager"
 	"github.com/nedostupno/zinaida/internal/repository"
 	"github.com/nedostupno/zinaida/logger"
 )
@@ -15,6 +16,7 @@ type api struct {
 	repo   *repository.Repository
 	logger *logger.Logger
 	cfg    *config.ManagerConfig
+	grpc   *manager.Server
 }
 
 func (a *api) InitRouter() {
@@ -42,11 +44,12 @@ func (a *api) Run() {
 	}
 }
 
-func GetApi(repo *repository.Repository, log *logger.Logger, cfg *config.ManagerConfig) *api {
+func GetApi(repo *repository.Repository, log *logger.Logger, cfg *config.ManagerConfig, grpcServer *manager.Server) *api {
 	return &api{
 		router: &mux.Router{},
 		repo:   repo,
 		logger: log,
 		cfg:    cfg,
+		grpc:   grpcServer,
 	}
 }

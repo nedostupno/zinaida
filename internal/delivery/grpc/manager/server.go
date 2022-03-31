@@ -11,28 +11,35 @@ import (
 	"google.golang.org/grpc"
 )
 
-type server struct {
+type Server struct {
 	repo   *repository.Repository
 	logger *logger.Logger
+	cfg    *config.ManagerConfig
 	manager.UnimplementedManagerServer
 }
 
-func RunServer(repo *repository.Repository, log *logger.Logger, cfg *config.ManagerConfig) {
+func NewManagerServer(repo *repository.Repository, logger *logger.Logger, cfg *config.ManagerConfig) *Server {
+	return &Server{
+		repo:                       repo,
+		logger:                     logger,
+		cfg:                        cfg,
+		UnimplementedManagerServer: manager.UnimplementedManagerServer{},
+	}
+}
+
+func (s *Server) RunServer() {
 	srv := grpc.NewServer()
-	port := cfg.Grpc.Port
-	ip := cfg.Grpc.Ip
+	port := s.cfg.Grpc.Port
+	ip := s.cfg.Grpc.Ip
 
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", ip, port))
 	if err != nil {
-		log.WhithErrorFields(err).Fatalf("Не удалось начать прослушивать адрес %s:%d", ip, port)
+		s.logger.WhithErrorFields(err).Fatalf("Не удалось начать прослушивать адрес %s:%d", ip, port)
 	}
 
-	var s server
-	s.logger = log
-	s.repo = repo
 	manager.RegisterManagerServer(srv, s)
 
 	if err := srv.Serve(lis); err != nil {
-		log.WhithErrorFields(err).Fatalf("Не удалось начать обслуживать grpc сервер")
+		s.logger.WhithErrorFields(err).Fatalf("Не удалось начать обслуживать grpc сервер")
 	}
 }

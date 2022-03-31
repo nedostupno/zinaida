@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-func (s server) Registrate(ctx context.Context, r *manager.RegistrateRequest) (*manager.RegistrateResponse, error) {
+func (s *Server) Registrate(ctx context.Context, r *manager.RegistrateRequest) (*manager.RegistrateResponse, error) {
 	domain := r.GetDomain()
 	ip := r.GetIp()
 
@@ -64,7 +64,7 @@ func (s server) Registrate(ctx context.Context, r *manager.RegistrateRequest) (*
 	return resp, nil
 }
 
-func GetStat(ip string, port int) (*agent.GetServerStatResponse, error) {
+func (s *Server) GetStat(ip string, port int) (*agent.GetServerStatResponse, error) {
 
 	conn, err := grpc.Dial(fmt.Sprintf("%v:%d", ip, port), grpc.WithInsecure())
 	if err != nil {
@@ -80,27 +80,9 @@ func GetStat(ip string, port int) (*agent.GetServerStatResponse, error) {
 		return nil, err
 	}
 	return resp, nil
-
-	// c := manager.NewManagerClient(conn)
-	// r := &manager.RegistrateRequest{}
-	// domain := os.Getenv("DOMAIN_AGENT")
-	// ip := os.Getenv("IP_AGENT")
-
-	// if domain == "" {
-	// 	r.Node = &manager.RegistrateRequest_Ip{ip}
-	// } else {
-	// 	r.Node = &manager.RegistrateRequest_Domain{domain}
-	// }
-
-	// resp, err := Registrate(context.Background(), c, r)
-	// if err != nil {
-	// 	log.Println("Yps...... Nice Error: ", err)
-	// }
-
-	// fmt.Println(resp)
 }
 
-func Ping(ip string, port int, timeout int) (*agent.PingResponse, error) {
+func (s *Server) Ping(ip string, port int, timeout int) (*agent.PingResponse, error) {
 	conn, err := grpc.Dial(fmt.Sprintf("%v:%d", ip, port), grpc.WithInsecure())
 	if err != nil {
 		return nil, err
@@ -119,7 +101,7 @@ func Ping(ip string, port int, timeout int) (*agent.PingResponse, error) {
 	return resp, nil
 }
 
-func RebootNode(ip string, port int) (*agent.RebootResponse, error) {
+func (s *Server) RebootNode(ip string, port int) (*agent.RebootResponse, error) {
 	conn, err := grpc.Dial(fmt.Sprintf("%v:%d", ip, port), grpc.WithInsecure())
 	if err != nil {
 		return nil, err
