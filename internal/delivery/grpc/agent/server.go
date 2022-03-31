@@ -7,6 +7,7 @@ import (
 	"github.com/nedostupno/zinaida/internal/config"
 	"github.com/nedostupno/zinaida/logger"
 	"github.com/nedostupno/zinaida/proto/protoAgent"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
@@ -24,7 +25,7 @@ func NewAgentServer(log *logger.Logger, cfg *config.AgentConfig) *server {
 	}
 }
 
-func (s *server) RunServer() {
+func (s *server) RunServer(ctx context.Context) {
 	srv := grpc.NewServer()
 	port := s.cfg.Agent.Port
 	ip := s.cfg.Agent.Ip
@@ -36,11 +37,20 @@ func (s *server) RunServer() {
 
 	protoAgent.RegisterAgentServer(srv, s)
 
-	err = s.Registrate()
-	if err != nil {
-		s.log.WhithErrorFields(err).Fatal("Failed to auto-register when connecting to node manager")
-	}
-	if err := srv.Serve(lis); err != nil {
-		s.log.WhithErrorFields(err).Fatalf("failed to serve with listen: %v", lis)
-	}
+	go func() {
+		err = s.Registrate()
+		if err != nil {
+			s.log.WhithErrorFields(err).Fatal("Failed to auto-register when connecting to node manager")
+		}
+	}()
+
+	go func() {
+		if err := srv.Serve(lis); err != nil {
+			s.log.WhithErrorFields(err).Fatalf("failed to serve with listen: %v", lis)
+		}
+	}()
+
+	<-ctx.Done()
+
+	srv.GracefulStop()
 }
