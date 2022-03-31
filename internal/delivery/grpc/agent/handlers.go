@@ -7,15 +7,14 @@ import (
 	"net"
 	"os/exec"
 
-	"github.com/nedostupno/zinaida/internal/config"
 	"github.com/nedostupno/zinaida/proto/agent"
 	"github.com/nedostupno/zinaida/proto/manager"
 	"github.com/nedostupno/zinaida/stat"
 	"google.golang.org/grpc"
 )
 
-func Registrate(cfg *config.AgentConfig) error {
-	addr := fmt.Sprintf("%s:%d", cfg.Manager.Ip, cfg.Manager.Port)
+func (s *server) Registrate() error {
+	addr := fmt.Sprintf("%s:%d", s.cfg.Manager.Ip, s.cfg.Manager.Port)
 	conn, err := grpc.Dial(addr, grpc.WithInsecure())
 	if err != nil {
 		return err
@@ -25,9 +24,9 @@ func Registrate(cfg *config.AgentConfig) error {
 	c := manager.NewManagerClient(conn)
 	r := &manager.RegistrateRequest{}
 
-	domain := cfg.Agent.Domain
+	domain := s.cfg.Agent.Domain
 
-	ip := cfg.Agent.Ip
+	ip := s.cfg.Agent.Ip
 
 	// Получаем адреса на поднятых интерфейсах
 	addrs, err := net.InterfaceAddrs()
@@ -106,11 +105,11 @@ func Registrate(cfg *config.AgentConfig) error {
 	return nil
 }
 
-func (s server) Ping(ctx context.Context, r *agent.PingRequest) (*agent.PingResponse, error) {
+func (s *server) Ping(ctx context.Context, r *agent.PingRequest) (*agent.PingResponse, error) {
 	return &agent.PingResponse{}, nil
 }
 
-func (s server) Reboot(ctx context.Context, r *agent.RebootRequest) (*agent.RebootResponse, error) {
+func (s *server) Reboot(ctx context.Context, r *agent.RebootRequest) (*agent.RebootResponse, error) {
 
 	cmd := exec.Command("shutdown", "-r")
 	err := cmd.Run()
@@ -121,7 +120,7 @@ func (s server) Reboot(ctx context.Context, r *agent.RebootRequest) (*agent.Rebo
 	return &agent.RebootResponse{}, nil
 }
 
-func (s server) GetServerStat(ctx context.Context, r *agent.GetServerStatRequest) (*agent.GetServerStatResponse, error) {
+func (s *server) GetServerStat(ctx context.Context, r *agent.GetServerStatRequest) (*agent.GetServerStatResponse, error) {
 	cpu, err := stat.GetCPUPercent()
 	if err != nil {
 		return nil, err

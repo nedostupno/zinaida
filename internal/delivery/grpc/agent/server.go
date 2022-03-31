@@ -36,7 +36,7 @@ func (s *server) RunServer() {
 
 	agent.RegisterAgentServer(srv, s)
 
-	err = Registrate(s.cfg)
+	err = s.Registrate()
 	if err != nil {
 		s.log.WhithErrorFields(err).Fatal("Не удалось автоматически зарегистрироваться у ноды менеджера")
 	}
