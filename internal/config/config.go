@@ -34,6 +34,7 @@ type ManagerConfig struct {
 		AgentsPort     int    `yaml:"agents_port" env-default:"24444"`
 		PingTimeout    int    `yaml:"ping_timeout" env-default:"5000"`
 		GetStatTimeout int    `yaml:"get_stat_timeout" env-default:"5000"`
+		RebootTimeout  int    `yaml:"reboot_timeout" env-default:"5000"`
 	} `yaml:"gRPC"`
 }
 

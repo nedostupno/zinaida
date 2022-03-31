@@ -113,7 +113,9 @@ func (s *Server) RebootNode(ip string, port int) (*protoAgent.RebootResponse, er
 	c := protoAgent.NewAgentClient(conn)
 	r := &protoAgent.RebootRequest{}
 
-	resp, err := c.Reboot(context.Background(), r)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.cfg.Grpc.RebootTimeout)*time.Millisecond)
+	defer cancel()
+	resp, err := c.Reboot(ctx, r)
 	if err != nil {
 		return nil, err
 	}
