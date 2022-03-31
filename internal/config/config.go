@@ -55,10 +55,10 @@ func GetManagerConfig() (*ManagerConfig, error) {
 	}
 
 	if r := net.ParseIP(cfg.Rest.Ip); r == nil {
-		return nil, fmt.Errorf("в manager_config.yaml для rest указан не валидный ip адрес")
+		return nil, fmt.Errorf("manager_config.yaml for rest contains invalid ip address")
 	}
 	if r := net.ParseIP(cfg.Grpc.Ip); r == nil {
-		return nil, fmt.Errorf("в manager_config.yaml для grpc указан не валидный ip адрес")
+		return nil, fmt.Errorf("manager_config.yaml for grpc contains invalid ip address ")
 	}
 	return &cfg, nil
 }
@@ -71,27 +71,27 @@ func GetAgentConfig() (*AgentConfig, error) {
 	}
 
 	if r := net.ParseIP(cfg.Manager.Ip); r == nil {
-		return nil, fmt.Errorf("в agent_config.yaml для manager указан не валидный ip адрес")
+		return nil, fmt.Errorf("agent_config.yaml for manager contains invalid ip address")
 	}
 
 	if cfg.Agent.Ip != "" {
 		if r := net.ParseIP(cfg.Agent.Ip); r == nil {
-			return nil, fmt.Errorf("в agent_config.yaml для agent указан не валидный ip адрес")
+			return nil, fmt.Errorf("agent_config.yaml for agent contains invalid ip address")
 		}
 	}
 
 	if cfg.Agent.Domain != "" {
 		reg, err := regexp.Compile(`^([A-Za-zА-Яа-я0-9-]{1,63}\.)+[A-Za-zА-Яа-я0-9]{2,6}$`)
 		if err != nil {
-			return nil, fmt.Errorf("не удалось скомпилировать регулярное выражение")
+			return nil, fmt.Errorf("failed to compile regular expression")
 		}
 		ok := reg.MatchString(cfg.Agent.Domain)
 		if !ok {
-			return nil, fmt.Errorf("в agent_config.yaml для agent указан не валидный домен")
+			return nil, fmt.Errorf("agent_config.yaml for agent contains invalid domain")
 		}
 		len := utf8.RuneCountInString(cfg.Agent.Domain)
 		if len > 253 {
-			return nil, fmt.Errorf("в agent_config.yaml для agent указан не валидный домен")
+			return nil, fmt.Errorf("agent_config.yaml for agent contains invalid domain")
 		}
 	}
 	return &cfg, nil

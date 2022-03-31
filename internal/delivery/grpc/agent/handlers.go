@@ -46,7 +46,7 @@ func (s *server) Registrate() error {
 	}
 
 	if len(ipOnInerfaces) == 0 {
-		return errors.New("не обнаружено ни одного ipv4 адреса на интерфейсах кроме loopback")
+		return errors.New("no ipv4 addresses found on interfaces other than loopback")
 	}
 
 	// Проверяем является ли переданный ip одним из ip поднятых на интерфейсах
@@ -71,9 +71,9 @@ func (s *server) Registrate() error {
 		ips, err := net.LookupHost(domain)
 		if err != nil {
 			if r, ok := err.(*net.DNSError); ok && r.IsNotFound {
-				return fmt.Errorf("в конфиге передан не существующий домен %s", domain)
+				return fmt.Errorf("non-existent domain passed in config. Domain: %s", domain)
 			}
-			return fmt.Errorf("не удалось узнать ip домена %s : %+v", domain, err)
+			return fmt.Errorf("failed to find ip for domain %s : %+v", domain, err)
 		}
 
 		var ipDomainIsCorrect bool
@@ -90,7 +90,7 @@ func (s *server) Registrate() error {
 		}
 
 		if !ipDomainIsCorrect {
-			return fmt.Errorf("указанный в конфиге домен %s не направлен на сервер ноды агента", domain)
+			return fmt.Errorf("domain %s specified in the config is not directed to the agent node server", domain)
 		}
 
 		r.Domain = domain
@@ -99,7 +99,7 @@ func (s *server) Registrate() error {
 
 	_, err = c.Registrate(context.Background(), r)
 	if err != nil {
-		return fmt.Errorf("не удалось зарегистрировать ноду c данными: %v. Ошибка: %v", r, err)
+		return fmt.Errorf("failed to register node: %v. Error: %v", r, err)
 	}
 
 	return nil

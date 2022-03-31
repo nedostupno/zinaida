@@ -38,7 +38,7 @@ func (s *server) RunServer() {
 
 	err = s.Registrate()
 	if err != nil {
-		s.log.WhithErrorFields(err).Fatal("Не удалось автоматически зарегистрироваться у ноды менеджера")
+		s.log.WhithErrorFields(err).Fatal("Failed to auto-register when connecting to node manager")
 	}
 	if err := srv.Serve(lis); err != nil {
 		s.log.WhithErrorFields(err).Fatalf("failed to serve with listen: %v", lis)

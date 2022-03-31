@@ -40,7 +40,7 @@ func (a *api) Run() {
 	addr := fmt.Sprintf("%s:%d", a.cfg.Rest.Ip, a.cfg.Rest.Port)
 
 	if err := http.ListenAndServe(addr, a.router); err != nil {
-		a.logger.WhithErrorFields(err).Fatalf("Не удалось начать прослушивать адрес %s", addr)
+		a.logger.WhithErrorFields(err).Fatalf("failed to listen on %s", addr)
 	}
 }
 

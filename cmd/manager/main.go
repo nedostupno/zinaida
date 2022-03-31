@@ -13,11 +13,11 @@ func main() {
 
 	cfg, err := config.GetManagerConfig()
 	if err != nil {
-		log.WhithErrorFields(err).Fatal("не удалось получить конфигурацию")
+		log.WhithErrorFields(err).Fatal("failed to get configuration")
 	}
 	db, err := repository.NewSqliteDB()
 	if err != nil {
-		log.WhithErrorFields(err).Fatal("не удалось создать подключение к базе данных")
+		log.WhithErrorFields(err).Fatal("failed to create database connection")
 	}
 	defer db.Close()
 

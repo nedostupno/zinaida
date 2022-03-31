@@ -34,12 +34,12 @@ func (s *Server) RunServer() {
 
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", ip, port))
 	if err != nil {
-		s.logger.WhithErrorFields(err).Fatalf("Не удалось начать прослушивать адрес %s:%d", ip, port)
+		s.logger.WhithErrorFields(err).Fatalf("failed to listen on %s:%d", ip, port)
 	}
 
 	protoManager.RegisterManagerServer(srv, s)
 
 	if err := srv.Serve(lis); err != nil {
-		s.logger.WhithErrorFields(err).Fatalf("Не удалось начать обслуживать grpc сервер")
+		s.logger.WhithErrorFields(err).Fatalf("failed to server grpc server")
 	}
 }

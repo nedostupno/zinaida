@@ -60,7 +60,7 @@ func (t *Tracer) getListenAddr() ([4]byte, error) {
 		}
 	}
 
-	err = errors.New("не обнаружено ни одного ipv4 адреса на интерфейсах кроме loopback")
+	err = errors.New("no ipv4 addresses found on interfaces other than loopback")
 
 	return addr, err
 }

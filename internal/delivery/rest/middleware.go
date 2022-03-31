@@ -25,13 +25,13 @@ func (a *api) JwtAuthenticationMiddleware(h http.Handler) http.Handler {
 
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			JsonError(w, "Пропущен токен аутентификации", http.StatusUnauthorized)
+			JsonError(w, "Missed auth token", http.StatusUnauthorized)
 			return
 		}
 
 		splittedHeader := strings.Split(authHeader, " ")
 		if len(splittedHeader) != 2 || splittedHeader[0] != "Bearer" {
-			JsonError(w, "Невалидный токен аутентификации", http.StatusUnauthorized)
+			JsonError(w, "Invalid authentication token", http.StatusUnauthorized)
 			return
 		}
 
@@ -45,7 +45,7 @@ func (a *api) JwtAuthenticationMiddleware(h http.Handler) http.Handler {
 		})
 
 		if err != nil || !token.Valid {
-			JsonError(w, "Невалидный токен аутентификации", http.StatusUnauthorized)
+			JsonError(w, "Invalid authentication token", http.StatusUnauthorized)
 			return
 		}
 

@@ -19,9 +19,9 @@ func (s *Server) Registrate(ctx context.Context, r *protoManager.RegistrateReque
 		ips, err := net.LookupHost(domain)
 		if err != nil {
 			if r, ok := err.(*net.DNSError); ok && r.IsNotFound {
-				return nil, fmt.Errorf("передан не существующий домен")
+				return nil, fmt.Errorf("transferred domain does not exist ")
 			}
-			return nil, fmt.Errorf("не удалось узнать ip домена")
+			return nil, fmt.Errorf("failed to find ip for domain %s : %+v", domain, err)
 		}
 		var ok bool
 		for _, i := range ips {
@@ -31,7 +31,7 @@ func (s *Server) Registrate(ctx context.Context, r *protoManager.RegistrateReque
 		}
 
 		if !ok {
-			return nil, fmt.Errorf("переданный ip адрес и ip адерс из А записи домена не совпадают")
+			return nil, fmt.Errorf("the passed ip address and the ip address from the A record of the domain do not match")
 		}
 
 		isExist, err := s.repo.CheckNodeExistenceByIP(ip)
@@ -40,7 +40,7 @@ func (s *Server) Registrate(ctx context.Context, r *protoManager.RegistrateReque
 		}
 
 		if isExist {
-			return nil, fmt.Errorf("данная нода уже добавлена в мониторинг")
+			return nil, fmt.Errorf("this node is already exist in monitoring")
 		}
 	}
 

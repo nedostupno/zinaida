@@ -11,7 +11,7 @@ func main() {
 
 	cfg, err := config.GetAgentConfig()
 	if err != nil {
-		log.WhithErrorFields(err).Fatal("не удалось получить конфигурацию")
+		log.WhithErrorFields(err).Fatal("failed to get configuration")
 	}
 
 	srv := agent.NewAgentServer(log, cfg)
