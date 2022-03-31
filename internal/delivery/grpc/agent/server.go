@@ -6,21 +6,21 @@ import (
 
 	"github.com/nedostupno/zinaida/internal/config"
 	"github.com/nedostupno/zinaida/logger"
-	"github.com/nedostupno/zinaida/proto/agent"
+	"github.com/nedostupno/zinaida/proto/protoAgent"
 	"google.golang.org/grpc"
 )
 
 type server struct {
 	log *logger.Logger
 	cfg *config.AgentConfig
-	agent.UnimplementedAgentServer
+	protoAgent.UnimplementedAgentServer
 }
 
 func NewAgentServer(log *logger.Logger, cfg *config.AgentConfig) *server {
 	return &server{
 		log:                      log,
 		cfg:                      cfg,
-		UnimplementedAgentServer: agent.UnimplementedAgentServer{},
+		UnimplementedAgentServer: protoAgent.UnimplementedAgentServer{},
 	}
 }
 
@@ -34,7 +34,7 @@ func (s *server) RunServer() {
 		s.log.WhithErrorFields(err).Fatalf("failed to listen on %s:%d", ip, port)
 	}
 
-	agent.RegisterAgentServer(srv, s)
+	protoAgent.RegisterAgentServer(srv, s)
 
 	err = s.Registrate()
 	if err != nil {

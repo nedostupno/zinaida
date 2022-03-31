@@ -7,8 +7,8 @@ import (
 	"net"
 	"os/exec"
 
-	"github.com/nedostupno/zinaida/proto/agent"
-	"github.com/nedostupno/zinaida/proto/manager"
+	"github.com/nedostupno/zinaida/proto/protoAgent"
+	"github.com/nedostupno/zinaida/proto/protoManager"
 	"github.com/nedostupno/zinaida/stat"
 	"google.golang.org/grpc"
 )
@@ -21,8 +21,8 @@ func (s *server) Registrate() error {
 	}
 	defer conn.Close()
 
-	c := manager.NewManagerClient(conn)
-	r := &manager.RegistrateRequest{}
+	c := protoManager.NewManagerClient(conn)
+	r := &protoManager.RegistrateRequest{}
 
 	domain := s.cfg.Agent.Domain
 
@@ -34,7 +34,7 @@ func (s *server) Registrate() error {
 		return err
 	}
 
-	// Получаем слайс ip адрессов, поднятных на интерфейсх, кроме loopback
+	// Получаем слайс ip адрессов, поднятных на интерфейсах, кроме loopback
 	var ipOnInerfaces []string
 	for _, a := range addrs {
 		if IPNet, ok := a.(*net.IPNet); ok && !IPNet.IP.IsLoopback() {
@@ -105,11 +105,11 @@ func (s *server) Registrate() error {
 	return nil
 }
 
-func (s *server) Ping(ctx context.Context, r *agent.PingRequest) (*agent.PingResponse, error) {
-	return &agent.PingResponse{}, nil
+func (s *server) Ping(ctx context.Context, r *protoAgent.PingRequest) (*protoAgent.PingResponse, error) {
+	return &protoAgent.PingResponse{}, nil
 }
 
-func (s *server) Reboot(ctx context.Context, r *agent.RebootRequest) (*agent.RebootResponse, error) {
+func (s *server) Reboot(ctx context.Context, r *protoAgent.RebootRequest) (*protoAgent.RebootResponse, error) {
 
 	cmd := exec.Command("shutdown", "-r")
 	err := cmd.Run()
@@ -117,10 +117,10 @@ func (s *server) Reboot(ctx context.Context, r *agent.RebootRequest) (*agent.Reb
 		return nil, err
 	}
 
-	return &agent.RebootResponse{}, nil
+	return &protoAgent.RebootResponse{}, nil
 }
 
-func (s *server) GetServerStat(ctx context.Context, r *agent.GetServerStatRequest) (*agent.GetServerStatResponse, error) {
+func (s *server) GetServerStat(ctx context.Context, r *protoAgent.GetServerStatRequest) (*protoAgent.GetServerStatResponse, error) {
 	cpu, err := stat.GetCPUPercent()
 	if err != nil {
 		return nil, err
@@ -146,14 +146,14 @@ func (s *server) GetServerStat(ctx context.Context, r *agent.GetServerStatReques
 		return nil, err
 	}
 
-	response := &agent.GetServerStatResponse{
-		ServerStat: &agent.ServerStat{
-			La: &agent.LA{
+	response := &protoAgent.GetServerStatResponse{
+		ServerStat: &protoAgent.ServerStat{
+			La: &protoAgent.LA{
 				One:     la.One,
 				Five:    la.Five,
 				Fifteen: la.Fifteen,
 			},
-			Mem: &agent.Mem{
+			Mem: &protoAgent.Mem{
 				Total:     mem.Total,
 				Used:      mem.Used,
 				Free:      mem.Free,
@@ -163,24 +163,24 @@ func (s *server) GetServerStat(ctx context.Context, r *agent.GetServerStatReques
 				SwapUsed:  mem.SwapUsed,
 				SwapFree:  mem.SwapFree,
 			},
-			Cpu: &agent.CPU{
-				CPUPercent: []*agent.CPUPercent{},
+			Cpu: &protoAgent.CPU{
+				CPUPercent: []*protoAgent.CPUPercent{},
 			},
-			Disk: &agent.Disk{
+			Disk: &protoAgent.Disk{
 				Total:      disk.Total,
 				Used:       disk.Used,
 				InodeTotal: disk.InodesTotal,
 				InodesUsed: disk.InodesUsed,
 			},
-			TopProc: &agent.TopProc{
-				Process: []*agent.Process{},
+			TopProc: &protoAgent.TopProc{
+				Process: []*protoAgent.Process{},
 			},
 		},
 		Err: "",
 	}
 
 	for i := 0; i < len(cpu); i++ {
-		response.ServerStat.Cpu.CPUPercent = append(response.ServerStat.Cpu.CPUPercent, &agent.CPUPercent{
+		response.ServerStat.Cpu.CPUPercent = append(response.ServerStat.Cpu.CPUPercent, &protoAgent.CPUPercent{
 			CPU:     cpu[i].Cpu,
 			Usage:   cpu[i].Usage,
 			User:    cpu[i].User,
@@ -194,7 +194,7 @@ func (s *server) GetServerStat(ctx context.Context, r *agent.GetServerStatReques
 	}
 
 	for i := 0; i < len(topProc.Process); i++ {
-		response.ServerStat.TopProc.Process = append(response.ServerStat.TopProc.Process, &agent.Process{
+		response.ServerStat.TopProc.Process = append(response.ServerStat.TopProc.Process, &protoAgent.Process{
 			User:    topProc.Process[i].User,
 			PID:     topProc.Process[i].PID,
 			CPU:     topProc.Process[i].CPU,

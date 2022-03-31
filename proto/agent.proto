@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package agent;
+package protoAgent;
 
-option go_package = "./proto/agent";
+option go_package = "./proto/protoAgent";
 
 message LA {
     double one = 1;

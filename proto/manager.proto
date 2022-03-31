@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package manager;
+package protoManager;
 
-option go_package = "./proto/manager";
+option go_package = "./proto/protoManager";
 
 
 message NodeAgent {

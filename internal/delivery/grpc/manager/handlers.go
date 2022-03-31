@@ -6,12 +6,12 @@ import (
 	"net"
 	"time"
 
-	"github.com/nedostupno/zinaida/proto/agent"
-	"github.com/nedostupno/zinaida/proto/manager"
+	"github.com/nedostupno/zinaida/proto/protoAgent"
+	"github.com/nedostupno/zinaida/proto/protoManager"
 	"google.golang.org/grpc"
 )
 
-func (s *Server) Registrate(ctx context.Context, r *manager.RegistrateRequest) (*manager.RegistrateResponse, error) {
+func (s *Server) Registrate(ctx context.Context, r *protoManager.RegistrateRequest) (*protoManager.RegistrateResponse, error) {
 	domain := r.GetDomain()
 	ip := r.GetIp()
 
@@ -54,8 +54,8 @@ func (s *Server) Registrate(ctx context.Context, r *manager.RegistrateRequest) (
 		return nil, err
 	}
 
-	resp := &manager.RegistrateResponse{
-		NodeAgent: &manager.NodeAgent{
+	resp := &protoManager.RegistrateResponse{
+		NodeAgent: &protoManager.NodeAgent{
 			Id:     int64(node.Id),
 			Ip:     node.Ip,
 			Domain: node.Domain,
@@ -64,7 +64,7 @@ func (s *Server) Registrate(ctx context.Context, r *manager.RegistrateRequest) (
 	return resp, nil
 }
 
-func (s *Server) GetStat(ip string, port int) (*agent.GetServerStatResponse, error) {
+func (s *Server) GetStat(ip string, port int) (*protoAgent.GetServerStatResponse, error) {
 
 	conn, err := grpc.Dial(fmt.Sprintf("%v:%d", ip, port), grpc.WithInsecure())
 	if err != nil {
@@ -72,8 +72,8 @@ func (s *Server) GetStat(ip string, port int) (*agent.GetServerStatResponse, err
 	}
 	defer conn.Close()
 
-	c := agent.NewAgentClient(conn)
-	r := &agent.GetServerStatRequest{}
+	c := protoAgent.NewAgentClient(conn)
+	r := &protoAgent.GetServerStatRequest{}
 
 	resp, err := c.GetServerStat(context.Background(), r)
 	if err != nil {
@@ -82,15 +82,15 @@ func (s *Server) GetStat(ip string, port int) (*agent.GetServerStatResponse, err
 	return resp, nil
 }
 
-func (s *Server) Ping(ip string, port int, timeout int) (*agent.PingResponse, error) {
+func (s *Server) Ping(ip string, port int, timeout int) (*protoAgent.PingResponse, error) {
 	conn, err := grpc.Dial(fmt.Sprintf("%v:%d", ip, port), grpc.WithInsecure())
 	if err != nil {
 		return nil, err
 	}
 	defer conn.Close()
 
-	c := agent.NewAgentClient(conn)
-	r := &agent.PingRequest{}
+	c := protoAgent.NewAgentClient(conn)
+	r := &protoAgent.PingRequest{}
 	cntx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer cancel()
 
@@ -101,15 +101,15 @@ func (s *Server) Ping(ip string, port int, timeout int) (*agent.PingResponse, er
 	return resp, nil
 }
 
-func (s *Server) RebootNode(ip string, port int) (*agent.RebootResponse, error) {
+func (s *Server) RebootNode(ip string, port int) (*protoAgent.RebootResponse, error) {
 	conn, err := grpc.Dial(fmt.Sprintf("%v:%d", ip, port), grpc.WithInsecure())
 	if err != nil {
 		return nil, err
 	}
 	defer conn.Close()
 
-	c := agent.NewAgentClient(conn)
-	r := &agent.RebootRequest{}
+	c := protoAgent.NewAgentClient(conn)
+	r := &protoAgent.RebootRequest{}
 
 	resp, err := c.Reboot(context.Background(), r)
 	if err != nil {

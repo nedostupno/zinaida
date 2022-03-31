@@ -7,7 +7,7 @@ import (
 	"github.com/nedostupno/zinaida/internal/config"
 	"github.com/nedostupno/zinaida/internal/repository"
 	"github.com/nedostupno/zinaida/logger"
-	"github.com/nedostupno/zinaida/proto/manager"
+	"github.com/nedostupno/zinaida/proto/protoManager"
 	"google.golang.org/grpc"
 )
 
@@ -15,7 +15,7 @@ type Server struct {
 	repo   *repository.Repository
 	logger *logger.Logger
 	cfg    *config.ManagerConfig
-	manager.UnimplementedManagerServer
+	protoManager.UnimplementedManagerServer
 }
 
 func NewManagerServer(repo *repository.Repository, logger *logger.Logger, cfg *config.ManagerConfig) *Server {
@@ -23,7 +23,7 @@ func NewManagerServer(repo *repository.Repository, logger *logger.Logger, cfg *c
 		repo:                       repo,
 		logger:                     logger,
 		cfg:                        cfg,
-		UnimplementedManagerServer: manager.UnimplementedManagerServer{},
+		UnimplementedManagerServer: protoManager.UnimplementedManagerServer{},
 	}
 }
 
@@ -37,7 +37,7 @@ func (s *Server) RunServer() {
 		s.logger.WhithErrorFields(err).Fatalf("Не удалось начать прослушивать адрес %s:%d", ip, port)
 	}
 
-	manager.RegisterManagerServer(srv, s)
+	protoManager.RegisterManagerServer(srv, s)
 
 	if err := srv.Serve(lis); err != nil {
 		s.logger.WhithErrorFields(err).Fatalf("Не удалось начать обслуживать grpc сервер")

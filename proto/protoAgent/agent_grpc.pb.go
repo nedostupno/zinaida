@@ -4,7 +4,7 @@
 // - protoc             v3.6.1
 // source: proto/agent.proto
 
-package agent
+package protoAgent
 
 import (
 	context "context"
@@ -37,7 +37,7 @@ func NewAgentClient(cc grpc.ClientConnInterface) AgentClient {
 
 func (c *agentClient) GetServerStat(ctx context.Context, in *GetServerStatRequest, opts ...grpc.CallOption) (*GetServerStatResponse, error) {
 	out := new(GetServerStatResponse)
-	err := c.cc.Invoke(ctx, "/agent.agent/GetServerStat", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/protoAgent.agent/GetServerStat", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (c *agentClient) GetServerStat(ctx context.Context, in *GetServerStatReques
 
 func (c *agentClient) Reboot(ctx context.Context, in *RebootRequest, opts ...grpc.CallOption) (*RebootResponse, error) {
 	out := new(RebootResponse)
-	err := c.cc.Invoke(ctx, "/agent.agent/Reboot", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/protoAgent.agent/Reboot", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (c *agentClient) Reboot(ctx context.Context, in *RebootRequest, opts ...grp
 
 func (c *agentClient) Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error) {
 	out := new(PingResponse)
-	err := c.cc.Invoke(ctx, "/agent.agent/Ping", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/protoAgent.agent/Ping", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func _Agent_GetServerStat_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/agent.agent/GetServerStat",
+		FullMethod: "/protoAgent.agent/GetServerStat",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AgentServer).GetServerStat(ctx, req.(*GetServerStatRequest))
@@ -126,7 +126,7 @@ func _Agent_Reboot_Handler(srv interface{}, ctx context.Context, dec func(interf
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/agent.agent/Reboot",
+		FullMethod: "/protoAgent.agent/Reboot",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AgentServer).Reboot(ctx, req.(*RebootRequest))
@@ -144,7 +144,7 @@ func _Agent_Ping_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/agent.agent/Ping",
+		FullMethod: "/protoAgent.agent/Ping",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AgentServer).Ping(ctx, req.(*PingRequest))
@@ -156,7 +156,7 @@ func _Agent_Ping_Handler(srv interface{}, ctx context.Context, dec func(interfac
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Agent_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "agent.agent",
+	ServiceName: "protoAgent.agent",
 	HandlerType: (*AgentServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

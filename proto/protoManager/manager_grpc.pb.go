@@ -4,7 +4,7 @@
 // - protoc             v3.6.1
 // source: proto/manager.proto
 
-package manager
+package protoManager
 
 import (
 	context "context"
@@ -35,7 +35,7 @@ func NewManagerClient(cc grpc.ClientConnInterface) ManagerClient {
 
 func (c *managerClient) Registrate(ctx context.Context, in *RegistrateRequest, opts ...grpc.CallOption) (*RegistrateResponse, error) {
 	out := new(RegistrateResponse)
-	err := c.cc.Invoke(ctx, "/manager.manager/Registrate", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/protoManager.manager/Registrate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func _Manager_Registrate_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/manager.manager/Registrate",
+		FullMethod: "/protoManager.manager/Registrate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ManagerServer).Registrate(ctx, req.(*RegistrateRequest))
@@ -92,7 +92,7 @@ func _Manager_Registrate_Handler(srv interface{}, ctx context.Context, dec func(
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Manager_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "manager.manager",
+	ServiceName: "protoManager.manager",
 	HandlerType: (*ManagerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
