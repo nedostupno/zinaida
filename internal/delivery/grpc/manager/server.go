@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"context"
 	"fmt"
 	"net"
 
@@ -27,7 +28,7 @@ func NewManagerServer(repo *repository.Repository, logger *logger.Logger, cfg *c
 	}
 }
 
-func (s *Server) RunServer() {
+func (s *Server) RunServer(ctx context.Context) {
 	srv := grpc.NewServer()
 	port := s.cfg.Grpc.Port
 	ip := s.cfg.Grpc.Ip
@@ -39,7 +40,13 @@ func (s *Server) RunServer() {
 
 	protoManager.RegisterManagerServer(srv, s)
 
-	if err := srv.Serve(lis); err != nil {
-		s.logger.WhithErrorFields(err).Fatalf("failed to server grpc server")
-	}
+	go func() {
+		if err := srv.Serve(lis); err != nil {
+			s.logger.WhithErrorFields(err).Fatalf("failed to server grpc server")
+		}
+	}()
+
+	<-ctx.Done()
+
+	srv.GracefulStop()
 }

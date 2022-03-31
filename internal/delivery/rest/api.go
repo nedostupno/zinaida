@@ -1,8 +1,10 @@
 package delivery
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/nedostupno/zinaida/internal/config"
@@ -12,11 +14,11 @@ import (
 )
 
 type api struct {
-	router *mux.Router
 	repo   *repository.Repository
 	logger *logger.Logger
 	cfg    *config.ManagerConfig
 	grpc   *manager.Server
+	srv    *http.Server
 }
 
 func (a *api) InitRouter() {
@@ -31,25 +33,38 @@ func (a *api) InitRouter() {
 	router.HandleFunc("/api/login/", a.Login).Methods("POST")
 	router.HandleFunc("/api/refresh/", a.Refresh).Methods("POST")
 
-	a.router = router
-
+	a.srv.Handler = router
 	router.Use(a.LoggingMidleware, a.JwtAuthenticationMiddleware)
 }
 
-func (a *api) Run() {
+func (a *api) Run(ctx context.Context) {
 	addr := fmt.Sprintf("%s:%d", a.cfg.Rest.Ip, a.cfg.Rest.Port)
+	a.srv.Addr = addr
 
-	if err := http.ListenAndServe(addr, a.router); err != nil {
-		a.logger.WhithErrorFields(err).Fatalf("failed to listen on %s", addr)
+	go func() {
+		if err := a.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			a.logger.WhithErrorFields(err).Fatalf("failed to listen on %s", addr)
+		}
+	}()
+
+	<-ctx.Done()
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	if err := a.srv.Shutdown(shutdownCtx); err != nil {
+		a.logger.WhithErrorFields(err).Fatal("failed graceful shutdown rest api server")
 	}
+
+	<-shutdownCtx.Done()
 }
 
 func GetApi(repo *repository.Repository, log *logger.Logger, cfg *config.ManagerConfig, grpcServer *manager.Server) *api {
 	return &api{
-		router: &mux.Router{},
 		repo:   repo,
 		logger: log,
 		cfg:    cfg,
 		grpc:   grpcServer,
+		srv:    &http.Server{},
 	}
 }

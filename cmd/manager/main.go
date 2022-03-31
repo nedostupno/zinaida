@@ -1,6 +1,11 @@
 package main
 
 import (
+	"context"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/nedostupno/zinaida/internal/config"
 	"github.com/nedostupno/zinaida/internal/delivery/grpc/manager"
 	api "github.com/nedostupno/zinaida/internal/delivery/rest"
@@ -23,10 +28,13 @@ func main() {
 
 	repo := repository.NewRepository(db)
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+	defer stop()
+
 	srv := manager.NewManagerServer(repo, log, cfg)
-	go srv.RunServer()
+	go srv.RunServer(ctx)
 
 	a := api.GetApi(repo, log, cfg, srv)
 	a.InitRouter()
-	a.Run()
+	a.Run(ctx)
 }
