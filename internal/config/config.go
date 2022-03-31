@@ -24,8 +24,9 @@ type ManagerConfig struct {
 		RefreshTokenTTL          int    `yaml:"refresh_token_ttl" env-default:"300"`
 	} `yaml:"jwt"`
 	Rest struct {
-		Ip   string `yaml:"ip" env-default:"0.0.0.0"`
-		Port int    `yaml:"port" env-default:"8000"`
+		Ip              string `yaml:"ip" env-default:"0.0.0.0"`
+		Port            int    `yaml:"port" env-default:"8000"`
+		ShutdownTimeout int    `yaml:"shutdown_timeout_ms" env-default:"8000"`
 	} `yaml:"rest"`
 	Grpc struct {
 		Ip          string `yaml:"ip" env-default:"0.0.0.0"`

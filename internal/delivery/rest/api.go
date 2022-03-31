@@ -49,7 +49,7 @@ func (a *api) Run(ctx context.Context) {
 
 	<-ctx.Done()
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Duration(a.cfg.Rest.ShutdownTimeout)*time.Millisecond)
 	defer cancel()
 
 	if err := a.srv.Shutdown(shutdownCtx); err != nil {
