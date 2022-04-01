@@ -36,13 +36,13 @@ func (s *server) RunServer(ctx context.Context) {
 	}
 
 	protoAgent.RegisterAgentServer(srv, s)
-
 	go func() {
 		err = s.Registrate()
 		if err != nil {
-			s.log.WhithErrorFields(err).Fatal("Failed to auto-register when connecting to node manager")
+			s.log.WhithErrorFields(err).Error("Failed to auto-register when connecting to node manager")
+		} else {
+			s.log.Debug("the node has successfully registered with the manager ")
 		}
-		s.log.Debug("the node has successfully registered with the manager ")
 	}()
 
 	go func() {
