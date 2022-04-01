@@ -16,9 +16,14 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/nedostupno/zinaida/internal/auth"
 	models "github.com/nedostupno/zinaida/internal/models"
-	"github.com/nedostupno/zinaida/internal/utils"
 	"github.com/nedostupno/zinaida/traceroute"
 )
+
+func Respond(w http.ResponseWriter, data map[string]interface{}, code int) {
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(code)
+	json.NewEncoder(w).Encode(data)
+}
 
 type APIError struct {
 	Success bool   `json:"success"`
@@ -50,7 +55,7 @@ func (a *api) GetMap(w http.ResponseWriter, r *http.Request) {
 			"success": true,
 			"message": "There are no agent nodes in monitoring. Unable to build network map",
 		}
-		utils.Respond(w, msg, http.StatusOK)
+		Respond(w, msg, http.StatusOK)
 	}
 
 	for _, node := range nodes {
@@ -141,7 +146,7 @@ func (a *api) GetNodes(w http.ResponseWriter, r *http.Request) {
 		"message": "List of nodes received",
 		"node":    nodes,
 	}
-	utils.Respond(w, msg, http.StatusOK)
+	Respond(w, msg, http.StatusOK)
 }
 
 func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
@@ -216,7 +221,7 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 			"message": "Failed to connect to agent node",
 			"node":    n,
 		}
-		utils.Respond(w, msg, http.StatusOK)
+		Respond(w, msg, http.StatusOK)
 		return
 	}
 
@@ -246,7 +251,7 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 			"message": "Node agent is already exist in monitoring",
 			"node":    existNode,
 		}
-		utils.Respond(w, msg, http.StatusOK)
+		Respond(w, msg, http.StatusOK)
 		return
 	}
 
@@ -269,7 +274,7 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 		"message": "Agent node successfully registered",
 		"node":    node,
 	}
-	utils.Respond(w, msg, http.StatusCreated)
+	Respond(w, msg, http.StatusCreated)
 }
 
 func (a *api) GetNodeInfo(w http.ResponseWriter, r *http.Request) {
@@ -304,7 +309,7 @@ func (a *api) GetNodeInfo(w http.ResponseWriter, r *http.Request) {
 		"message": "Information about the node-agent was successfully received",
 		"node":    node,
 	}
-	utils.Respond(w, msg, http.StatusOK)
+	Respond(w, msg, http.StatusOK)
 }
 
 func (a *api) DeleteNode(w http.ResponseWriter, r *http.Request) {
@@ -338,7 +343,7 @@ func (a *api) DeleteNode(w http.ResponseWriter, r *http.Request) {
 		"success": true,
 		"message": fmt.Sprintf("Agent node with id %d was successfully removed from monitoring ", id),
 	}
-	utils.Respond(w, msg, http.StatusOK)
+	Respond(w, msg, http.StatusOK)
 }
 
 func (a *api) GetStat(w http.ResponseWriter, r *http.Request) {
@@ -376,7 +381,7 @@ func (a *api) GetStat(w http.ResponseWriter, r *http.Request) {
 			"node":    node,
 			"stat":    nil,
 		}
-		utils.Respond(w, msg, http.StatusOK)
+		Respond(w, msg, http.StatusOK)
 		return
 	}
 
@@ -393,7 +398,7 @@ func (a *api) GetStat(w http.ResponseWriter, r *http.Request) {
 		"node":    node,
 		"stat":    resp,
 	}
-	utils.Respond(w, msg, http.StatusOK)
+	Respond(w, msg, http.StatusOK)
 }
 
 func (a *api) RebootNode(w http.ResponseWriter, r *http.Request) {
@@ -431,7 +436,7 @@ func (a *api) RebootNode(w http.ResponseWriter, r *http.Request) {
 			"node":    node,
 			"stat":    nil,
 		}
-		utils.Respond(w, msg, http.StatusOK)
+		Respond(w, msg, http.StatusOK)
 		return
 	}
 
@@ -443,7 +448,7 @@ func (a *api) RebootNode(w http.ResponseWriter, r *http.Request) {
 			"message": fmt.Sprintf("Не удалось выполнить перезагрузку ноды-агента с id %d", node.Id),
 			"node":    node,
 		}
-		utils.Respond(w, msg, http.StatusOK)
+		Respond(w, msg, http.StatusOK)
 		return
 	}
 
@@ -452,7 +457,7 @@ func (a *api) RebootNode(w http.ResponseWriter, r *http.Request) {
 		"message": fmt.Sprintf("Нода-агент с id %d будет перезагружена через 1 минуту", node.Id),
 		"node":    node,
 	}
-	utils.Respond(w, msg, http.StatusOK)
+	Respond(w, msg, http.StatusOK)
 }
 
 func (a *api) Login(w http.ResponseWriter, r *http.Request) {
@@ -509,8 +514,12 @@ func (a *api) Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		msg := utils.JWTMessage(jwt, refresh)
-		utils.Respond(w, msg, http.StatusOK)
+		msg := map[string]interface{}{
+			"success":       true,
+			"access_token":  jwt,
+			"refresh_token": refresh,
+		}
+		Respond(w, msg, http.StatusOK)
 		return
 	}
 	JsonError(w, "Incorrect data sent", http.StatusUnauthorized)
@@ -591,6 +600,10 @@ func (a *api) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msg := utils.JWTMessage(newJwt, newRefresh)
-	utils.Respond(w, msg, http.StatusOK)
+	msg := map[string]interface{}{
+		"success":       true,
+		"access_token":  newJwt,
+		"refresh_token": newRefresh,
+	}
+	Respond(w, msg, http.StatusOK)
 }
