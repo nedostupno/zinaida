@@ -71,7 +71,11 @@ func (a *api) GetMap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, _ := upgrader.Upgrade(w, r, nil)
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		JsonError(w, "failed to upgrade connection", http.StatusInternalServerError)
+		return
+	}
 	defer conn.Close()
 
 	hops := make(chan traceroute.Hop, 15)
