@@ -36,6 +36,8 @@ func (s *server) RunServer(ctx context.Context) {
 	}
 
 	protoAgent.RegisterAgentServer(srv, s)
+
+	// Пробуем в отдельной горутиние подключиться к ноде-менеджеру по gRPC и автоматически зарегистрироваться
 	go func() {
 		err = s.Registrate()
 		if err != nil {
