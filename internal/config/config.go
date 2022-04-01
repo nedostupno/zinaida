@@ -36,6 +36,7 @@ type ManagerConfig struct {
 		GetStatTimeout int    `yaml:"get_stat_timeout" env-default:"5000"`
 		RebootTimeout  int    `yaml:"reboot_timeout" env-default:"5000"`
 	} `yaml:"gRPC"`
+	LogLevel int `yaml:"log_level" env-default:"4"`
 }
 
 type AgentConfig struct {

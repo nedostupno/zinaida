@@ -11,6 +11,7 @@ import (
 	api "github.com/nedostupno/zinaida/internal/delivery/rest"
 	"github.com/nedostupno/zinaida/internal/repository"
 	"github.com/nedostupno/zinaida/logger"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -25,6 +26,8 @@ func main() {
 		log.WhithErrorFields(err).Fatal("failed to create database connection")
 	}
 	defer db.Close()
+
+	log.SetLevel(logrus.Level(cfg.LogLevel))
 
 	repo := repository.NewRepository(db)
 
