@@ -47,6 +47,7 @@ func (a *api) Run(ctx context.Context) {
 		}
 	}()
 
+	a.logger.Debugf("rest api server start listening on %s", addr)
 	<-ctx.Done()
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Duration(a.cfg.Rest.ShutdownTimeout)*time.Millisecond)
@@ -56,6 +57,7 @@ func (a *api) Run(ctx context.Context) {
 		a.logger.WhithErrorFields(err).Fatal("failed graceful shutdown rest api server")
 	}
 
+	a.logger.Debug("rest api server success graceful shutdown")
 	<-shutdownCtx.Done()
 }
 

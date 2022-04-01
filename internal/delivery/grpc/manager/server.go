@@ -45,8 +45,9 @@ func (s *Server) RunServer(ctx context.Context) {
 			s.logger.WhithErrorFields(err).Fatalf("failed to server grpc server")
 		}
 	}()
-
+	s.logger.Debugf("grpc server start serve on %s:%d", ip, port)
 	<-ctx.Done()
 
 	srv.GracefulStop()
+	s.logger.Debug("grpc server success graceful shutdown")
 }

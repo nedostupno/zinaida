@@ -42,6 +42,7 @@ func (s *server) RunServer(ctx context.Context) {
 		if err != nil {
 			s.log.WhithErrorFields(err).Fatal("Failed to auto-register when connecting to node manager")
 		}
+		s.log.Debug("the node has successfully registered with the manager ")
 	}()
 
 	go func() {
@@ -49,8 +50,10 @@ func (s *server) RunServer(ctx context.Context) {
 			s.log.WhithErrorFields(err).Fatalf("failed to serve with listen: %v", lis)
 		}
 	}()
+	s.log.Debugf("grpc server success start serve on %s:%d", ip, port)
 
 	<-ctx.Done()
 
 	srv.GracefulStop()
+	s.log.Debug("grpc server success graceful shutdown")
 }
