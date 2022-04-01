@@ -108,6 +108,7 @@ func (a *api) LoggingMidleware(h http.Handler) http.Handler {
 				"Status":   responseData.status,
 				"Duration": duration,
 				"Size":     responseData.size,
+				"address":  r.RemoteAddr,
 			}).Info()
 			return
 		}
@@ -119,6 +120,7 @@ func (a *api) LoggingMidleware(h http.Handler) http.Handler {
 			"Status":   responseData.status,
 			"Duration": duration,
 			"Size":     responseData.size,
+			"address":  r.RemoteAddr,
 		}).Info()
 	})
 }
