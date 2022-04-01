@@ -16,6 +16,7 @@ func (s *Server) Registrate(ctx context.Context, r *protoManager.RegistrateReque
 	ip := r.GetIp()
 
 	if domain != "" {
+		// Проверяем существование домена и получаем его ip адрес
 		ips, err := net.LookupHost(domain)
 		if err != nil {
 			if r, ok := err.(*net.DNSError); ok && r.IsNotFound {
@@ -23,6 +24,8 @@ func (s *Server) Registrate(ctx context.Context, r *protoManager.RegistrateReque
 			}
 			return nil, fmt.Errorf("failed to find ip for domain %s : %+v", domain, err)
 		}
+		// Проверяем является ли переданный нам ip адрес одним из тех,
+		// что указаны в ресурсных записях домена
 		var ok bool
 		for _, i := range ips {
 			if i == ip {
