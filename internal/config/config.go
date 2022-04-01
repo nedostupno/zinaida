@@ -50,6 +50,7 @@ type AgentConfig struct {
 		Domain            string `yaml:"domain"`
 		RegistrateTimeout int    `yaml:"registration_timeout" env-default:"5000"`
 	} `yaml:"agent"`
+	LogLevel int `yaml:"log_level" env-default:"4"`
 }
 
 func GetManagerConfig() (*ManagerConfig, error) {

@@ -9,6 +9,7 @@ import (
 	"github.com/nedostupno/zinaida/internal/config"
 	"github.com/nedostupno/zinaida/internal/delivery/grpc/agent"
 	"github.com/nedostupno/zinaida/logger"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -18,6 +19,7 @@ func main() {
 	if err != nil {
 		log.WhithErrorFields(err).Fatal("failed to get configuration")
 	}
+	log.SetLevel(logrus.Level(cfg.LogLevel))
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
