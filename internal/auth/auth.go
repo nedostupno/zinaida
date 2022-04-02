@@ -4,10 +4,12 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 )
 
 type CustomClaims struct {
-	Username string `json:"Username"`
+	Username string
+	UUID     string
 	jwt.StandardClaims
 }
 
@@ -15,6 +17,7 @@ func GenerateJWTToken(u string, key string, ttl int) (string, error) {
 
 	claims := CustomClaims{
 		Username: u,
+		UUID:     uuid.NewString(),
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Duration(ttl) * time.Minute).Unix(),
 			IssuedAt:  time.Now().Unix(),
@@ -31,6 +34,7 @@ func GenerateJWTToken(u string, key string, ttl int) (string, error) {
 func GenerateRefreshToken(u string, key string, ttl int) (string, error) {
 	claims := CustomClaims{
 		Username: u,
+		UUID:     uuid.NewString(),
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Duration(ttl) * time.Minute).Unix(),
 			IssuedAt:  time.Now().Unix(),
