@@ -289,14 +289,14 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	existNode, err := a.repo.GetNodeByIP(n.Ip)
-	if err != nil {
-		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to get node with ip %s from database ", n.Ip)
-		JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
-		return
-	}
-
 	if (isExistByDomain && n.Domain != "") || isExistByIP {
+		existNode, err := a.repo.GetNodeByIP(n.Ip)
+		if err != nil {
+			a.logger.WithRestApiErrorFields(r, err).Errorf("failed to get node with ip %s from database ", n.Ip)
+			JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
+			return
+		}
+
 		msg := map[string]interface{}{
 			"success": true,
 			"message": "Node agent is already exist in monitoring",
