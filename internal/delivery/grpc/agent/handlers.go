@@ -35,7 +35,7 @@ func (s *server) Registrate() error {
 		return err
 	}
 
-	// Получаем слайс ip адрессов, поднятных на интерфейсах, кроме loopback
+	// Получаем слайс ip адрессов, поднятных на интерфейсах, кроме loopback и IPv6
 	var ipOnInerfaces []string
 	for _, a := range addrs {
 		if IPNet, ok := a.(*net.IPNet); ok && !IPNet.IP.IsLoopback() {
@@ -50,21 +50,27 @@ func (s *server) Registrate() error {
 		return errors.New("no ipv4 addresses found on interfaces other than loopback")
 	}
 
-	// Проверяем является ли переданный ip одним из ip поднятых на интерфейсах
-	var ok bool
-	for _, i := range ipOnInerfaces {
-		if i == ip {
-			r.Ip = ip
-			ok = true
+	// Проверяем ip адрес:
+	//
+	// - Если ip не был передан в конфиге, то берем первый ip из тех, что поднят на интерфейсах
+	//
+	// - Иначе проверяем является ли он одним из ip поднятых на интерфейсе.
+	// 		- Если да, то будем использовать его для регистрации и идем дальше
+	// 		- Если нет, то возвращаем ошибку и не регистрируем ноду вообще
+	if r.Ip == "" {
+		r.Ip = ipOnInerfaces[0]
+	} else {
+		var ok bool
+		for _, i := range ipOnInerfaces {
+			if i == ip {
+				r.Ip = ip
+				ok = true
+			}
 		}
-	}
-	if !ok {
-		r.Ip = ipOnInerfaces[0]
-	}
 
-	// Если не предеан ни домен, ни ip, то регестируем ноду с ip, который поднят на интерфейсе
-	if domain == "" && ip == "" {
-		r.Ip = ipOnInerfaces[0]
+		if !ok {
+			return errors.New("the ip-address specified in the config is not one of the server's ip-addresses ")
+		}
 	}
 
 	if domain != "" {
@@ -80,7 +86,7 @@ func (s *server) Registrate() error {
 		var ipDomainIsCorrect bool
 		var ipIndex int
 
-		// Если ip не был передан, то проверяем равен ли ip домена ip на интерфейсе
+		// Проверяем является ли один из ip домена одним из ip на интерфейсе
 		for c, i := range ips {
 			for _, j := range ipOnInerfaces {
 				if i == j {
