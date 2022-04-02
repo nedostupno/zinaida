@@ -44,11 +44,15 @@ type Options struct {
 }
 
 func (t *Tracer) getListenAddr() ([4]byte, error) {
+	// Получаем слайс ip адресов интерфейсах не сервере
 	ips, err := net.InterfaceAddrs()
 	if err != nil {
 		return [4]byte{}, err
 	}
 
+	// В слайсе полученных ip адресов находим первый ip, который
+	// не является loopback адресом или IPv6, а затем
+	// возвращаем его в виде 4-х байтного массива
 	var addr [4]byte
 	for _, a := range ips {
 		if IPNet, ok := a.(*net.IPNet); ok && !IPNet.IP.IsLoopback() {
@@ -66,17 +70,21 @@ func (t *Tracer) getListenAddr() ([4]byte, error) {
 }
 
 func (t *Tracer) parseDestAddress(dest string) ([4]byte, error) {
+	// Получаем ip адрес из ресурных записей домена.
+	// Если dest уже является ip, то функция все равно отработает корретно
+	// и вернут слайс с одним элементом, которым и будует переданный ip
 	ips, err := net.LookupHost(dest)
 	if err != nil {
 		return [4]byte{}, err
 	}
 
+	// Приводим первый ip из нашего слайса, который является типом string к типу *net.IPAddr
 	ip, err := net.ResolveIPAddr("ip", ips[0])
 	if err != nil {
 		return [4]byte{}, err
 	}
 	destAddr := [4]byte{}
-
+	// Возвращаем полученный ip в виде 4-х байтного массива
 	copy(destAddr[:], ip.IP.To4())
 	return destAddr, nil
 }
@@ -122,7 +130,9 @@ func (t *Tracer) Traceroute(id int, dest string, c chan Hop, result chan models.
 	for {
 		start := time.Now()
 
+		// Устанавливаем ttl для отправяляющего сокета
 		syscall.SetsockoptInt(sendSocket, 0x0, syscall.IP_TTL, ttl)
+		// Устанавливаем время ожидания для слушающего сокета
 		syscall.SetsockoptTimeval(recvSocket, syscall.SOL_SOCKET, syscall.SO_RCVTIMEO, &tv)
 
 		syscall.Bind(recvSocket, &syscall.SockaddrInet4{Port: t.options.port, Addr: socketAddr})
@@ -132,9 +142,13 @@ func (t *Tracer) Traceroute(id int, dest string, c chan Hop, result chan models.
 		_, from, err := syscall.Recvfrom(recvSocket, p, 0)
 		elapsed := time.Since(start)
 
+		// Ошибку мы можем получить в случае, когда время ожидания на слушающем сокете истекло
 		if err != nil {
 			retry += 1
 
+			// Если количество попыток для конкретного хопа истекло, то
+			// мы отправялем информацию о том, что на данном хопе мы не получили ответ и
+			// переходим к следующему хопу
 			if retry > t.options.retries {
 				c <- Hop{
 					Id:          id,
@@ -149,6 +163,9 @@ func (t *Tracer) Traceroute(id int, dest string, c chan Hop, result chan models.
 				retry = 0
 			}
 
+			// Если мы не получаем ответа на хопе и при этом ttl уже достиг своего максимума установленного в конфиге,
+			// то мы сообщаем в канал result о том, что нам не удалось построить трассировку до ноды-агента,
+			// выходим из цикла и завершаем исполнение
 			if ttl > t.options.maxHops {
 				result <- models.TraceResult{
 					Addr:        fmt.Sprintf("%v.%v.%v.%v", destAddr[0], destAddr[1], destAddr[2], destAddr[3]),
@@ -156,6 +173,7 @@ func (t *Tracer) Traceroute(id int, dest string, c chan Hop, result chan models.
 				}
 				break
 			}
+			// Если ttl не достиг своего максимума, мы просто переходим к следующей итерации цикла
 			continue
 		}
 
