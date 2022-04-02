@@ -36,18 +36,18 @@ func (s *Server) Registrate(ctx context.Context, r *protoManager.RegistrateReque
 		if !ok {
 			return nil, fmt.Errorf("the passed ip address and the ip address from the A record of the domain do not match")
 		}
-
-		isExist, err := s.repo.CheckNodeExistenceByIP(ip)
-		if err != nil {
-			return nil, err
-		}
-
-		if isExist {
-			return nil, fmt.Errorf("this node is already exist in monitoring")
-		}
 	}
 
-	_, err := s.repo.AddNode(ip, domain)
+	isExist, err := s.repo.CheckNodeExistenceByIP(ip)
+	if err != nil {
+		return nil, err
+	}
+
+	if isExist {
+		return nil, fmt.Errorf("this node is already exist in monitoring")
+	}
+
+	_, err = s.repo.AddNode(ip, domain)
 	if err != nil {
 		return nil, err
 	}
