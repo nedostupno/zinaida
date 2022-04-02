@@ -71,6 +71,7 @@ func (a *api) GetMap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Пытаемся веревести подключение на websocket
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		JsonError(w, "failed to upgrade connection", http.StatusInternalServerError)
@@ -80,10 +81,11 @@ func (a *api) GetMap(w http.ResponseWriter, r *http.Request) {
 
 	hops := make(chan traceroute.Hop, 15)
 	result := make(chan models.TraceResult)
+	t := traceroute.NewTracer(a.cfg)
+
 	go func() {
 		defer close(hops)
 		for i, domain := range destinations {
-			t := traceroute.NewTracer(a.cfg)
 			err := t.Traceroute(i, domain, hops, result)
 			if err != nil {
 				a.logger.WithRestApiErrorFields(r, err).Errorf("Failed to build trace to node %v", domain)
@@ -93,6 +95,14 @@ func (a *api) GetMap(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
+	// В данной горутине мы читаем данные из канала result.
+	// В канал приходит информация о том удалось ли построить трассировку до конкретной ноды
+	//
+	//	- Если трассировку до ноды построить не удалось, то мы увеличиваем на 1 значение поля
+	// unreachable для нужной нам ноды в базе данных
+	//
+	//	- Если нам удалось построить трассировку, то мы обнуляем значение поля unreachable
+	// для нужной нам ноды в базе данных
 	go func() {
 		for res := range result {
 
@@ -162,6 +172,40 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
+	/*
+		Как происходит регистрация ноды в зависимости от переданных данных.
+
+
+			Нам могут передать:
+				- Домен
+				- IP
+				- Домен + IP
+
+
+			# Передан только домен:
+				- Получаем ip из A записей домена
+					- Если не удалось получить ip, то возвращаем ошибку,
+					- Если ip получен, то выполняем grpc Ping, чтобы удостовериться, что на сервере установлено и запущенно наше ПО
+						- Если Ping прошел успешно, то регистрируем ноду-агента
+						- Если нет, то возвращаем ошибку
+
+			# Передан только ip
+				- Проверяем, что передан валидный ip
+			  		- Если все в порядке, то выполняем grpc Ping, чтобы удостовериться, что на сервере установлено и запущенно наше ПО
+						- Если Ping прошел успешно, то регистрируем ноду-агента
+						- Если нет, то возвращаем ошибку
+
+					- Если ip не валиден, то возвращаем ошибку
+
+			# Передан ip + домен
+				- Получаем ip из А записей домена
+				- Проверяем является ли переданный ip одним из ip в А записях домена
+					- Если все в порядке, то выполняем grpc Ping, чтобы удостовериться, что на сервере установлено и запущенно наше ПО
+						- Если Ping прошел успешно, то регистрируем ноду-агента
+						- Если нет, то возвращаем ошибку
+
+					- Если ip нет, то возвращаем ошибку
+	*/
 
 	if n.Domain == "" && n.Ip == "" {
 		JsonError(w, "Neither domain nor ip address was sent", http.StatusBadRequest)
@@ -185,6 +229,8 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 			JsonError(w, "Specified domain is too long", http.StatusBadRequest)
 			return
 		}
+
+		// Проверяем существование домена и получаем его ip адрес
 		resolvedIPs, err := net.LookupHost(n.Domain)
 		if err != nil {
 			if r, ok := err.(*net.DNSError); ok && r.IsNotFound {
@@ -198,18 +244,19 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 
 		if n.Ip == "" {
 			n.Ip = resolvedIPs[0]
-		}
-
-		var ok bool
-		for _, ip := range resolvedIPs {
-			if ip == n.Ip {
-				ok = true
+		} else {
+			// Проверяем является ли переданный ip одним из ip из ресурсных записей домена
+			var ok bool
+			for _, ip := range resolvedIPs {
+				if ip == n.Ip {
+					ok = true
+				}
 			}
-		}
 
-		if !ok && n.Ip != "" {
-			JsonError(w, "Specified ip address and ip address from domain resource records are different", http.StatusBadRequest)
-			return
+			if !ok && n.Ip != "" {
+				JsonError(w, "Specified ip address and ip address from domain resource records are different", http.StatusBadRequest)
+				return
+			}
 		}
 	}
 

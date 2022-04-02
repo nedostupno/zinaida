@@ -13,6 +13,7 @@ import (
 
 func (a *api) JwtAuthenticationMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Определяем эндпоинты, которые не требуют аутентификации
 		notAuth := []string{"/api/login/", "/api/refresh/"}
 		requestPath := r.URL.Path
 
@@ -59,6 +60,10 @@ type (
 		size   int
 	}
 
+	// Создаем собственный ReponseWriter, чтобы:
+	// - сохранить имплементацию инфтерфейса http.Hijacker при проходе
+	// через middleware
+	// - получить информацию о статусе ответа и размере ответа
 	loggingResponseWriter struct {
 		http.ResponseWriter
 		http.Hijacker
@@ -66,12 +71,14 @@ type (
 	}
 )
 
+// Реализуем свой метод Write, чтобы получить информацию о размере ответа
 func (r *loggingResponseWriter) Write(b []byte) (int, error) {
 	size, err := r.ResponseWriter.Write(b)
 	r.responseData.size += size
 	return size, err
 }
 
+// Реализуем свой метод WriteHeader, чтобы получить статуст ответа
 func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 	r.ResponseWriter.WriteHeader(statusCode)
 	r.responseData.status = statusCode
