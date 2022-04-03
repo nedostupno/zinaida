@@ -4,6 +4,8 @@ package protoManager;
 
 option go_package = "./protoManager";
 
+import "google/api/annotations.proto";
+
 
 message NodeAgent {
     int64 id = 1;
@@ -20,7 +22,19 @@ message RegistrateRequest {
     string domain = 2;
 }
 
-
 service manager {
     rpc Registrate (RegistrateRequest) returns (RegistrateResponse);
+    rpc GetNode (GetNodeRequest) returns (GetNodeResponse){
+        option (google.api.http) = {
+            get: "/nodes/{id}"
+        };
+    };
+}
+
+message GetNodeRequest{
+    int64 id = 1;
+}
+
+message GetNodeResponse{
+    NodeAgent nodeAgent = 1;
 }
