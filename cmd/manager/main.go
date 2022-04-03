@@ -37,6 +37,8 @@ func main() {
 	srv := manager.NewManagerServer(repo, log, cfg)
 	go srv.RunServer(ctx)
 
+	go srv.RunGatewayServer(ctx)
+
 	a := api.GetApi(repo, log, cfg, srv)
 	a.InitRouter()
 	a.Run(ctx)
