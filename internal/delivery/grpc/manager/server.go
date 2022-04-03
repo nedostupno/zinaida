@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/nedostupno/zinaida/internal/config"
 	"github.com/nedostupno/zinaida/internal/repository"
@@ -34,7 +35,7 @@ func NewManagerServer(repo *repository.Repository, logger *logger.Logger, cfg *c
 }
 
 func (s *Server) RunServer(ctx context.Context) {
-	srv := grpc.NewServer()
+	srv := grpc.NewServer(grpc_middleware.WithUnaryServerChain(s.JwtAuthenticationInterceptor))
 	port := s.cfg.Grpc.Port
 	ip := s.cfg.Grpc.Ip
 
