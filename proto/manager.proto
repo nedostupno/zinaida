@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package protoManager;
 
-option go_package = "./proto/protoManager";
+option go_package = "./protoManager";
 
 
 message NodeAgent {
