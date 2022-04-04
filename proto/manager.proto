@@ -29,6 +29,12 @@ service manager {
             get: "/api/nodes/{id}"
         };
     };
+    rpc Login (LoginRequest) returns (LoginResponse) {
+        option (google.api.http) = {
+            post: "/api/login"
+            body: "*"
+        };
+    }
 }
 
 message GetNodeRequest{
@@ -40,3 +46,17 @@ message GetNodeResponse{
     NodeAgent nodeAgent = 2;
     string message = 3;
 }
+
+message LoginRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    int64 code = 1;
+    string access_token = 2;
+    string refresh_token = 3;
+    string message = 4;
+}
+
+

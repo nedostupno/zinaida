@@ -18,7 +18,7 @@ import (
 
 func (s *Server) JwtAuthenticationInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	// Определяем эндпоинты, которые не требуют аутентификации
-	notAuth := []string{"/protoManager.manager/login/", "/protoManager.manager/refresh/"}
+	notAuth := []string{"/protoManager.manager/Login", "/protoManager.manager/Refresh"}
 	requestPath := info.FullMethod
 
 	for _, v := range notAuth {
@@ -26,6 +26,8 @@ func (s *Server) JwtAuthenticationInterceptor(ctx context.Context, req interface
 			return handler(ctx, req)
 		}
 	}
+
+	fmt.Printf("info.FullMethod: %v\n", info.FullMethod)
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
