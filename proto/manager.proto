@@ -65,9 +65,23 @@ message LoginRequest {
 }
 
 message LoginResponse {
-    int64 code = 1;
-    string access_token = 2;
-    string refresh_token = 3;
-    string message = 4;
+    oneof result {
+        JWT jwt = 1;
+        Error error = 2;
+    }
+
+    message Error {
+        string message = 1;
+        Code code = 2;
+        
+        enum Code {
+            INTERNAL_ERROR = 0;
+            INCORRECT_DATA = 1;
+        }
+    }
 }
 
+message JWT {
+    string access_token = 2;
+    string refresh_token = 3;
+}

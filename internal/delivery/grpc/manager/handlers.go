@@ -11,9 +11,7 @@ import (
 	"github.com/nedostupno/zinaida/proto/protoManager"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 )
 
 func (s *Server) Registrate(ctx context.Context, r *protoManager.RegistrateRequest) (*protoManager.RegistrateResponse, error) {
@@ -131,21 +129,22 @@ func (s *Server) RebootNode(ip string, port int) (*protoAgent.RebootResponse, er
 }
 
 func (s *Server) GetNode(ctx context.Context, r *protoManager.GetNodeRequest) (*protoManager.GetNodeResponse, error) {
+	internalError := &protoManager.GetNodeResponse{
+		Result: &protoManager.GetNodeResponse_Error_{
+			Error: &protoManager.GetNodeResponse_Error{
+				Message: "An unexpected error has occurred",
+				Code:    0,
+			},
+		},
+	}
+
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		s.logger.WhithErrorFields(fmt.Errorf("failed to get metadata from incomming context")).Error()
 		md.Append("x-http-code", "500")
 		grpc.SendHeader(ctx, md)
 
-		resp := &protoManager.GetNodeResponse{
-			Result: &protoManager.GetNodeResponse_Error_{
-				Error: &protoManager.GetNodeResponse_Error{
-					Message: "An unexpected error has occurred",
-					Code:    0,
-				},
-			},
-		}
-		return resp, nil
+		return internalError, nil
 	}
 
 	id := int(r.GetId())
@@ -156,15 +155,7 @@ func (s *Server) GetNode(ctx context.Context, r *protoManager.GetNodeRequest) (*
 		md.Append("x-http-code", "500")
 		grpc.SendHeader(ctx, md)
 
-		resp := &protoManager.GetNodeResponse{
-			Result: &protoManager.GetNodeResponse_Error_{
-				Error: &protoManager.GetNodeResponse_Error{
-					Message: "An unexpected error has occurred",
-					Code:    0,
-				},
-			},
-		}
-		return resp, nil
+		return internalError, nil
 	}
 
 	if !isExist {
@@ -188,16 +179,7 @@ func (s *Server) GetNode(ctx context.Context, r *protoManager.GetNodeRequest) (*
 		md.Append("x-http-code", "500")
 		grpc.SendHeader(ctx, md)
 
-		resp := &protoManager.GetNodeResponse{
-			Result: &protoManager.GetNodeResponse_Error_{
-				Error: &protoManager.GetNodeResponse_Error{
-					Message: "An unexpected error has occurred",
-					Code:    0,
-				},
-			},
-		}
-
-		return resp, nil
+		return internalError, nil
 	}
 
 	resp := &protoManager.GetNodeResponse{
@@ -217,48 +199,96 @@ func (s *Server) GetNode(ctx context.Context, r *protoManager.GetNodeRequest) (*
 }
 
 func (s *Server) Login(ctx context.Context, r *protoManager.LoginRequest) (*protoManager.LoginResponse, error) {
+	internalError := &protoManager.LoginResponse{
+		Result: &protoManager.LoginResponse_Error_{
+			Error: &protoManager.LoginResponse_Error{
+				Message: "An unexpected error has occurred",
+				Code:    0,
+			},
+		},
+	}
+
+	IncorrectDataError := &protoManager.LoginResponse{
+		Result: &protoManager.LoginResponse_Error_{
+			Error: &protoManager.LoginResponse_Error{
+				Message: "Incorrect data sent",
+				Code:    1,
+			},
+		},
+	}
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		s.logger.WhithErrorFields(fmt.Errorf("failed to get metadata from incomming context")).Error()
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
 	exist, err := s.repo.Users.IsExist(r.Username)
 	if err != nil {
 		s.logger.WhithErrorFields(err).Errorf("failed to check the existence of user %s in the database", r.Username)
-		return nil, status.Error(codes.Internal, "An unexpected error has occurred")
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
 	}
 
 	if !exist {
-		return nil, status.Error(codes.Unauthenticated, "Incorrect data sent")
+		md.Append("x-http-code", "401")
+		grpc.SendHeader(ctx, md)
+		return IncorrectDataError, nil
 	}
 
 	user, err := s.repo.Users.Get(r.Username)
 	if err != nil {
 		s.logger.WhithErrorFields(err).Errorf("failed to get user %s from database", r.Username)
-		return nil, status.Error(codes.Internal, "An unexpected error has occurred")
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(r.Password))
+
 	if r.Username == user.Username && err == nil {
 		jwt, err := auth.GenerateJWTToken(user.Username, s.cfg.Jwt.SecretKeyForAccessToken, s.cfg.Jwt.AccessTokenTTL)
 		if err != nil {
 			s.logger.WhithErrorFields(err).Errorf("failed to generate JWT access token for user %s", user.Username)
-			return nil, status.Error(codes.Internal, "An unexpected error has occurred")
+			md.Append("x-http-code", "500")
+			grpc.SendHeader(ctx, md)
+			return internalError, nil
 		}
 
 		refresh, err := auth.GenerateRefreshToken(user.Username, s.cfg.Jwt.SecretKeyForRefreshToken, s.cfg.Jwt.RefreshTokenTTL)
 		if err != nil {
 			s.logger.WhithErrorFields(err).Errorf("failed to generate JWT refresh token for user %s ", user.Username)
-			return nil, status.Error(codes.Internal, "An unexpected error has occurred")
+			md.Append("x-http-code", "500")
+			grpc.SendHeader(ctx, md)
+			return internalError, nil
 		}
 
 		_, err = s.repo.Users.UpdateRefreshToken(user.Username, refresh)
 		if err != nil {
 			s.logger.WhithErrorFields(err).Errorf("failed to update JWT refresh token in database for user %s ", user.Username)
-			return nil, status.Error(codes.Internal, "An unexpected error has occurred")
+			md.Append("x-http-code", "500")
+			grpc.SendHeader(ctx, md)
+			return internalError, nil
 		}
 
-		return &protoManager.LoginResponse{
-			Code:         0,
-			AccessToken:  jwt,
-			RefreshToken: refresh,
-			Message:      "you have successfully logged in",
-		}, nil
+		md.Append("x-http-code", "200")
+		grpc.SendHeader(ctx, md)
+
+		resp := &protoManager.LoginResponse{
+			Result: &protoManager.LoginResponse_Jwt{
+				Jwt: &protoManager.JWT{
+					AccessToken:  jwt,
+					RefreshToken: refresh,
+				},
+			},
+		}
+		return resp, nil
 	}
-	return nil, status.Error(codes.Unauthenticated, "Incorrect data sent")
+
+	md.Append("x-http-code", "401")
+	grpc.SendHeader(ctx, md)
+	return IncorrectDataError, nil
 }
