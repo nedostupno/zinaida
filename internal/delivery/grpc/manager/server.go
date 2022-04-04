@@ -70,9 +70,10 @@ func (s *Server) RunGatewayServer(ctx context.Context) {
 		},
 	}
 
-	muxOpt := runtime.WithMarshalerOption(runtime.MIMEWildcard, customMarshaller)
-
-	mux := runtime.NewServeMux(muxOpt)
+	mux := runtime.NewServeMux(
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, customMarshaller),
+		runtime.WithForwardResponseOption(s.httpResponseModifier),
+	)
 
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	err := protoManager.RegisterManagerHandlerFromEndpoint(ctx, mux, addr, opts)

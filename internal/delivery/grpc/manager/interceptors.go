@@ -3,17 +3,21 @@ package manager
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/nedostupno/zinaida/internal/auth"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 func (s *Server) JwtAuthenticationInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
@@ -138,4 +142,25 @@ func (a *Server) LoggingMidleware(h http.Handler) http.Handler {
 			"address":  r.RemoteAddr,
 		}).Info()
 	})
+}
+
+func (s Server) httpResponseModifier(ctx context.Context, w http.ResponseWriter, p proto.Message) error {
+	md, ok := runtime.ServerMetadataFromContext(ctx)
+	if !ok {
+		log.Fatal("\nSYKA")
+	}
+
+	// set http status code
+	if vals := md.HeaderMD.Get("x-http-code"); len(vals) > 0 {
+		code, err := strconv.Atoi(vals[0])
+		if err != nil {
+			return err
+		}
+		// delete the headers to not expose any grpc-metadata in http response
+		delete(md.HeaderMD, "x-http-code")
+		delete(w.Header(), "Grpc-Metadata-X-Http-Code")
+		w.WriteHeader(code)
+	}
+
+	return nil
 }
