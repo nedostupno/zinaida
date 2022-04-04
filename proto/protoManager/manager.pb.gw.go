@@ -96,7 +96,7 @@ func RegisterManagerHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/protoManager.Manager/GetNode", runtime.WithHTTPPathPattern("/nodes/{id}"))
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/protoManager.Manager/GetNode", runtime.WithHTTPPathPattern("/api/nodes/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -159,7 +159,7 @@ func RegisterManagerHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/protoManager.Manager/GetNode", runtime.WithHTTPPathPattern("/nodes/{id}"))
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/protoManager.Manager/GetNode", runtime.WithHTTPPathPattern("/api/nodes/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -179,7 +179,7 @@ func RegisterManagerHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 }
 
 var (
-	pattern_Manager_GetNode_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"nodes", "id"}, ""))
+	pattern_Manager_GetNode_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"api", "nodes", "id"}, ""))
 )
 
 var (
