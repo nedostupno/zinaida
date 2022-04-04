@@ -83,7 +83,7 @@ func (s *Server) RunGatewayServer(ctx context.Context) {
 	server := http.Server{
 		// TODO: заменить addr на адрес для rest api
 		Addr:    ":8080",
-		Handler: mux,
+		Handler: s.LoggingMidleware(mux),
 	}
 
 	go func() {

@@ -3,10 +3,13 @@ package manager
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
+	"time"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/nedostupno/zinaida/internal/auth"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -55,4 +58,82 @@ func (s *Server) JwtAuthenticationInterceptor(ctx context.Context, req interface
 	}
 
 	return handler(ctx, req)
+}
+
+type (
+	responseData struct {
+		status int
+		size   int
+	}
+
+	// Создаем собственный ReponseWriter, чтобы:
+	// - сохранить имплементацию инфтерфейса http.Hijacker при проходе
+	// через middleware
+	// - получить информацию о статусе ответа и размере ответа
+	loggingResponseWriter struct {
+		http.ResponseWriter
+		http.Hijacker
+		responseData *responseData
+	}
+)
+
+// Реализуем свой метод Write, чтобы получить информацию о размере ответа
+func (r *loggingResponseWriter) Write(b []byte) (int, error) {
+	size, err := r.ResponseWriter.Write(b)
+	r.responseData.size += size
+	return size, err
+}
+
+// Реализуем свой метод WriteHeader, чтобы получить статуст ответа
+func (r *loggingResponseWriter) WriteHeader(statusCode int) {
+	r.ResponseWriter.WriteHeader(statusCode)
+	r.responseData.status = statusCode
+}
+
+func (a *Server) LoggingMidleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		responseData := &responseData{
+			status: 0,
+			size:   0,
+		}
+
+		hij, ok := w.(http.Hijacker)
+		if !ok {
+			a.logger.WhithErrorFields(fmt.Errorf("websocket: responseWriter does not implement http.Hijacker")).Fatal()
+		}
+
+		lrw := loggingResponseWriter{
+			ResponseWriter: w,
+			Hijacker:       hij,
+			responseData:   responseData,
+		}
+
+		h.ServeHTTP(&lrw, r)
+
+		duration := time.Since(start)
+		if responseData.status >= 400 {
+			a.logger.WithFields(logrus.Fields{
+				"Success":  false,
+				"URI":      r.RequestURI,
+				"Method":   r.Method,
+				"Status":   responseData.status,
+				"Duration": duration,
+				"Size":     responseData.size,
+				"address":  r.RemoteAddr,
+			}).Info()
+			return
+		}
+
+		a.logger.WithFields(logrus.Fields{
+			"Success":  true,
+			"URI":      r.RequestURI,
+			"Method":   r.Method,
+			"Status":   responseData.status,
+			"Duration": duration,
+			"Size":     responseData.size,
+			"address":  r.RemoteAddr,
+		}).Info()
+	})
 }
