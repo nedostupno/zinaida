@@ -9,6 +9,8 @@ import (
 	"github.com/nedostupno/zinaida/proto/protoAgent"
 	"github.com/nedostupno/zinaida/proto/protoManager"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func (s *Server) Registrate(ctx context.Context, r *protoManager.RegistrateRequest) (*protoManager.RegistrateResponse, error) {
@@ -122,5 +124,36 @@ func (s *Server) RebootNode(ip string, port int) (*protoAgent.RebootResponse, er
 	if err != nil {
 		return nil, err
 	}
+	return resp, nil
+}
+
+func (s *Server) GetNode(ctx context.Context, r *protoManager.GetNodeRequest) (*protoManager.GetNodeResponse, error) {
+	id := int(r.GetId())
+
+	isExist, err := s.repo.Nodes.CheckNodeExistenceByID(id)
+	if err != nil {
+		s.logger.WhithErrorFields(err).Errorf("failed check node existence by id %d in database", id)
+		return nil, status.Error(codes.Internal, "An unexpected error has occurred")
+	}
+
+	if !isExist {
+		return nil, status.Errorf(codes.NotFound, "node with id %d does not exist", id)
+	}
+
+	node, err := s.repo.GetNodeByID(id)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "An unexpected error has occurred")
+	}
+
+	resp := &protoManager.GetNodeResponse{
+		NodeAgent: &protoManager.NodeAgent{
+			Id:     int64(node.Id),
+			Ip:     node.Ip,
+			Domain: node.Domain,
+		},
+		Code:    0,
+		Message: "agent node successfully received",
+	}
+
 	return resp, nil
 }
