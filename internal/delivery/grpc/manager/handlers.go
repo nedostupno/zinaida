@@ -12,6 +12,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -130,32 +131,87 @@ func (s *Server) RebootNode(ip string, port int) (*protoAgent.RebootResponse, er
 }
 
 func (s *Server) GetNode(ctx context.Context, r *protoManager.GetNodeRequest) (*protoManager.GetNodeResponse, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		s.logger.WhithErrorFields(fmt.Errorf("failed to get metadata from incomming context")).Error()
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+
+		resp := &protoManager.GetNodeResponse{
+			Result: &protoManager.GetNodeResponse_Error_{
+				Error: &protoManager.GetNodeResponse_Error{
+					Message: "An unexpected error has occurred",
+					Code:    0,
+				},
+			},
+		}
+		return resp, nil
+	}
+
 	id := int(r.GetId())
 
 	isExist, err := s.repo.Nodes.CheckNodeExistenceByID(id)
 	if err != nil {
 		s.logger.WhithErrorFields(err).Errorf("failed check node existence by id %d in database", id)
-		return nil, status.Error(codes.Internal, "An unexpected error has occurred")
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+
+		resp := &protoManager.GetNodeResponse{
+			Result: &protoManager.GetNodeResponse_Error_{
+				Error: &protoManager.GetNodeResponse_Error{
+					Message: "An unexpected error has occurred",
+					Code:    0,
+				},
+			},
+		}
+		return resp, nil
 	}
 
 	if !isExist {
-		return nil, status.Errorf(codes.NotFound, "node with id %d does not exist", id)
+		md.Append("x-http-code", "404")
+		grpc.SendHeader(ctx, md)
+
+		resp := &protoManager.GetNodeResponse{
+			Result: &protoManager.GetNodeResponse_Error_{
+				Error: &protoManager.GetNodeResponse_Error{
+					Message: fmt.Sprintf("node with id %d does not exist", id),
+					Code:    1,
+				},
+			},
+		}
+
+		return resp, nil
 	}
 
 	node, err := s.repo.GetNodeByID(id)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "An unexpected error has occurred")
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+
+		resp := &protoManager.GetNodeResponse{
+			Result: &protoManager.GetNodeResponse_Error_{
+				Error: &protoManager.GetNodeResponse_Error{
+					Message: "An unexpected error has occurred",
+					Code:    0,
+				},
+			},
+		}
+
+		return resp, nil
 	}
 
 	resp := &protoManager.GetNodeResponse{
-		NodeAgent: &protoManager.NodeAgent{
-			Id:     int64(node.Id),
-			Ip:     node.Ip,
-			Domain: node.Domain,
+		Result: &protoManager.GetNodeResponse_NodeAgent{
+			NodeAgent: &protoManager.NodeAgent{
+				Id:     int64(node.Id),
+				Ip:     node.Ip,
+				Domain: node.Domain,
+			},
 		},
-		Code:    0,
-		Message: "agent node successfully received",
 	}
+
+	md.Append("x-http-code", "200")
+	grpc.SendHeader(ctx, md)
 
 	return resp, nil
 }

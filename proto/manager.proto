@@ -42,9 +42,21 @@ message GetNodeRequest{
 }
 
 message GetNodeResponse{
-    int64 code = 1;
-    NodeAgent nodeAgent = 2;
-    string message = 3;
+
+    oneof result {
+        NodeAgent nodeAgent = 1;
+        Error error = 2;
+    }
+    
+    message Error {
+        string message = 1;
+        Code code = 2;
+        
+        enum Code {
+            INTERNAL_ERROR = 0;
+            NODE_NOT_EXIST = 1;
+        }
+    }
 }
 
 message LoginRequest {
@@ -58,5 +70,4 @@ message LoginResponse {
     string refresh_token = 3;
     string message = 4;
 }
-
 
