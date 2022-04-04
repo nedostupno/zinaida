@@ -113,6 +113,55 @@ func (LoginResponse_Error_Code) EnumDescriptor() ([]byte, []int) {
 	return file_manager_proto_rawDescGZIP(), []int{6, 0, 0}
 }
 
+type RefreshResponse_Error_Code int32
+
+const (
+	RefreshResponse_Error_INTERNAL_ERROR        RefreshResponse_Error_Code = 0
+	RefreshResponse_Error_INVALID_REFRESH_TOKEN RefreshResponse_Error_Code = 1
+	RefreshResponse_Error_MISSED_REFRESH_TOKEN  RefreshResponse_Error_Code = 2
+)
+
+// Enum value maps for RefreshResponse_Error_Code.
+var (
+	RefreshResponse_Error_Code_name = map[int32]string{
+		0: "INTERNAL_ERROR",
+		1: "INVALID_REFRESH_TOKEN",
+		2: "MISSED_REFRESH_TOKEN",
+	}
+	RefreshResponse_Error_Code_value = map[string]int32{
+		"INTERNAL_ERROR":        0,
+		"INVALID_REFRESH_TOKEN": 1,
+		"MISSED_REFRESH_TOKEN":  2,
+	}
+)
+
+func (x RefreshResponse_Error_Code) Enum() *RefreshResponse_Error_Code {
+	p := new(RefreshResponse_Error_Code)
+	*p = x
+	return p
+}
+
+func (x RefreshResponse_Error_Code) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RefreshResponse_Error_Code) Descriptor() protoreflect.EnumDescriptor {
+	return file_manager_proto_enumTypes[2].Descriptor()
+}
+
+func (RefreshResponse_Error_Code) Type() protoreflect.EnumType {
+	return &file_manager_proto_enumTypes[2]
+}
+
+func (x RefreshResponse_Error_Code) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RefreshResponse_Error_Code.Descriptor instead.
+func (RefreshResponse_Error_Code) EnumDescriptor() ([]byte, []int) {
+	return file_manager_proto_rawDescGZIP(), []int{9, 0, 0}
+}
+
 type NodeAgent struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -595,6 +644,133 @@ func (x *JWT) GetRefreshToken() string {
 	return ""
 }
 
+type RefreshRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	RefreshToken string `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
+}
+
+func (x *RefreshRequest) Reset() {
+	*x = RefreshRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RefreshRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RefreshRequest) ProtoMessage() {}
+
+func (x *RefreshRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RefreshRequest.ProtoReflect.Descriptor instead.
+func (*RefreshRequest) Descriptor() ([]byte, []int) {
+	return file_manager_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *RefreshRequest) GetRefreshToken() string {
+	if x != nil {
+		return x.RefreshToken
+	}
+	return ""
+}
+
+type RefreshResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Types that are assignable to Result:
+	//	*RefreshResponse_Jwt
+	//	*RefreshResponse_Error_
+	Result isRefreshResponse_Result `protobuf_oneof:"result"`
+}
+
+func (x *RefreshResponse) Reset() {
+	*x = RefreshResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RefreshResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RefreshResponse) ProtoMessage() {}
+
+func (x *RefreshResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_proto_msgTypes[9]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RefreshResponse.ProtoReflect.Descriptor instead.
+func (*RefreshResponse) Descriptor() ([]byte, []int) {
+	return file_manager_proto_rawDescGZIP(), []int{9}
+}
+
+func (m *RefreshResponse) GetResult() isRefreshResponse_Result {
+	if m != nil {
+		return m.Result
+	}
+	return nil
+}
+
+func (x *RefreshResponse) GetJwt() *JWT {
+	if x, ok := x.GetResult().(*RefreshResponse_Jwt); ok {
+		return x.Jwt
+	}
+	return nil
+}
+
+func (x *RefreshResponse) GetError() *RefreshResponse_Error {
+	if x, ok := x.GetResult().(*RefreshResponse_Error_); ok {
+		return x.Error
+	}
+	return nil
+}
+
+type isRefreshResponse_Result interface {
+	isRefreshResponse_Result()
+}
+
+type RefreshResponse_Jwt struct {
+	Jwt *JWT `protobuf:"bytes,1,opt,name=jwt,proto3,oneof"`
+}
+
+type RefreshResponse_Error_ struct {
+	Error *RefreshResponse_Error `protobuf:"bytes,2,opt,name=error,proto3,oneof"`
+}
+
+func (*RefreshResponse_Jwt) isRefreshResponse_Result() {}
+
+func (*RefreshResponse_Error_) isRefreshResponse_Result() {}
+
 type GetNodeResponse_Error struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -607,7 +783,7 @@ type GetNodeResponse_Error struct {
 func (x *GetNodeResponse_Error) Reset() {
 	*x = GetNodeResponse_Error{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_proto_msgTypes[8]
+		mi := &file_manager_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -620,7 +796,7 @@ func (x *GetNodeResponse_Error) String() string {
 func (*GetNodeResponse_Error) ProtoMessage() {}
 
 func (x *GetNodeResponse_Error) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_proto_msgTypes[8]
+	mi := &file_manager_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -662,7 +838,7 @@ type LoginResponse_Error struct {
 func (x *LoginResponse_Error) Reset() {
 	*x = LoginResponse_Error{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_proto_msgTypes[9]
+		mi := &file_manager_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -675,7 +851,7 @@ func (x *LoginResponse_Error) String() string {
 func (*LoginResponse_Error) ProtoMessage() {}
 
 func (x *LoginResponse_Error) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_proto_msgTypes[9]
+	mi := &file_manager_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -703,6 +879,61 @@ func (x *LoginResponse_Error) GetCode() LoginResponse_Error_Code {
 		return x.Code
 	}
 	return LoginResponse_Error_INTERNAL_ERROR
+}
+
+type RefreshResponse_Error struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Message string                     `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	Code    RefreshResponse_Error_Code `protobuf:"varint,2,opt,name=code,proto3,enum=protoManager.RefreshResponse_Error_Code" json:"code,omitempty"`
+}
+
+func (x *RefreshResponse_Error) Reset() {
+	*x = RefreshResponse_Error{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RefreshResponse_Error) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RefreshResponse_Error) ProtoMessage() {}
+
+func (x *RefreshResponse_Error) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RefreshResponse_Error.ProtoReflect.Descriptor instead.
+func (*RefreshResponse_Error) Descriptor() ([]byte, []int) {
+	return file_manager_proto_rawDescGZIP(), []int{9, 0}
+}
+
+func (x *RefreshResponse_Error) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *RefreshResponse_Error) GetCode() RefreshResponse_Error_Code {
+	if x != nil {
+		return x.Code
+	}
+	return RefreshResponse_Error_INTERNAL_ERROR
 }
 
 var File_manager_proto protoreflect.FileDescriptor
@@ -771,26 +1002,55 @@ var file_manager_proto_rawDesc = []byte{
 	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x61, 0x63, 0x63, 0x65, 0x73, 0x73, 0x54, 0x6f, 0x6b,
 	0x65, 0x6e, 0x12, 0x23, 0x0a, 0x0d, 0x72, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x5f, 0x74, 0x6f,
 	0x6b, 0x65, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x72, 0x65, 0x66, 0x72, 0x65,
-	0x73, 0x68, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x32, 0x94, 0x02, 0x0a, 0x07, 0x6d, 0x61, 0x6e, 0x61,
-	0x67, 0x65, 0x72, 0x12, 0x4f, 0x0a, 0x0a, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x61, 0x74,
-	0x65, 0x12, 0x1f, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72,
-	0x2e, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x1a, 0x20, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65,
-	0x72, 0x2e, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5f, 0x0a, 0x07, 0x47, 0x65, 0x74, 0x4e, 0x6f, 0x64, 0x65, 0x12,
-	0x1c, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x47,
-	0x65, 0x74, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1d, 0x2e,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x47, 0x65, 0x74,
-	0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x17, 0x82, 0xd3,
-	0xe4, 0x93, 0x02, 0x11, 0x12, 0x0f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x6e, 0x6f, 0x64, 0x65, 0x73,
-	0x2f, 0x7b, 0x69, 0x64, 0x7d, 0x12, 0x57, 0x0a, 0x05, 0x4c, 0x6f, 0x67, 0x69, 0x6e, 0x12, 0x1a,
-	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x4c, 0x6f,
-	0x67, 0x69, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1b, 0x2e, 0x70, 0x72, 0x6f,
+	0x73, 0x68, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x22, 0x35, 0x0a, 0x0e, 0x52, 0x65, 0x66, 0x72, 0x65,
+	0x73, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x72, 0x65, 0x66,
+	0x72, 0x65, 0x73, 0x68, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x0c, 0x72, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x22, 0xb2,
+	0x02, 0x0a, 0x0f, 0x52, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x25, 0x0a, 0x03, 0x6a, 0x77, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x11, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x4a,
+	0x57, 0x54, 0x48, 0x00, 0x52, 0x03, 0x6a, 0x77, 0x74, 0x12, 0x3b, 0x0a, 0x05, 0x65, 0x72, 0x72,
+	0x6f, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x52, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x48, 0x00, 0x52,
+	0x05, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x1a, 0xb0, 0x01, 0x0a, 0x05, 0x45, 0x72, 0x72, 0x6f, 0x72,
+	0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x3c, 0x0a, 0x04, 0x63, 0x6f,
+	0x64, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x28, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x52, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x2e, 0x43, 0x6f,
+	0x64, 0x65, 0x52, 0x04, 0x63, 0x6f, 0x64, 0x65, 0x22, 0x4f, 0x0a, 0x04, 0x43, 0x6f, 0x64, 0x65,
+	0x12, 0x12, 0x0a, 0x0e, 0x49, 0x4e, 0x54, 0x45, 0x52, 0x4e, 0x41, 0x4c, 0x5f, 0x45, 0x52, 0x52,
+	0x4f, 0x52, 0x10, 0x00, 0x12, 0x19, 0x0a, 0x15, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f,
+	0x52, 0x45, 0x46, 0x52, 0x45, 0x53, 0x48, 0x5f, 0x54, 0x4f, 0x4b, 0x45, 0x4e, 0x10, 0x01, 0x12,
+	0x18, 0x0a, 0x14, 0x4d, 0x49, 0x53, 0x53, 0x45, 0x44, 0x5f, 0x52, 0x45, 0x46, 0x52, 0x45, 0x53,
+	0x48, 0x5f, 0x54, 0x4f, 0x4b, 0x45, 0x4e, 0x10, 0x02, 0x42, 0x08, 0x0a, 0x06, 0x72, 0x65, 0x73,
+	0x75, 0x6c, 0x74, 0x32, 0xf5, 0x02, 0x0a, 0x07, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x12,
+	0x4f, 0x0a, 0x0a, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x61, 0x74, 0x65, 0x12, 0x1f, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x52, 0x65, 0x67,
+	0x69, 0x73, 0x74, 0x72, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20,
+	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x52, 0x65,
+	0x67, 0x69, 0x73, 0x74, 0x72, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x5f, 0x0a, 0x07, 0x47, 0x65, 0x74, 0x4e, 0x6f, 0x64, 0x65, 0x12, 0x1c, 0x2e, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x47, 0x65, 0x74, 0x4e, 0x6f,
+	0x64, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1d, 0x2e, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x47, 0x65, 0x74, 0x4e, 0x6f, 0x64, 0x65,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x17, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x11,
+	0x12, 0x0f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x6e, 0x6f, 0x64, 0x65, 0x73, 0x2f, 0x7b, 0x69, 0x64,
+	0x7d, 0x12, 0x57, 0x0a, 0x05, 0x4c, 0x6f, 0x67, 0x69, 0x6e, 0x12, 0x1a, 0x2e, 0x70, 0x72, 0x6f,
 	0x74, 0x6f, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x4c, 0x6f, 0x67, 0x69, 0x6e, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x15, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x0f, 0x22,
-	0x0a, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x6c, 0x6f, 0x67, 0x69, 0x6e, 0x3a, 0x01, 0x2a, 0x42, 0x10,
-	0x5a, 0x0e, 0x2e, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1b, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x4d, 0x61,
+	0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x4c, 0x6f, 0x67, 0x69, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x22, 0x15, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x0f, 0x22, 0x0a, 0x2f, 0x61, 0x70,
+	0x69, 0x2f, 0x6c, 0x6f, 0x67, 0x69, 0x6e, 0x3a, 0x01, 0x2a, 0x12, 0x5f, 0x0a, 0x07, 0x52, 0x65,
+	0x66, 0x72, 0x65, 0x73, 0x68, 0x12, 0x1c, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x4d, 0x61, 0x6e,
+	0x61, 0x67, 0x65, 0x72, 0x2e, 0x52, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x1a, 0x1d, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x4d, 0x61, 0x6e, 0x61, 0x67,
+	0x65, 0x72, 0x2e, 0x52, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x22, 0x17, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x11, 0x22, 0x0c, 0x2f, 0x61, 0x70, 0x69,
+	0x2f, 0x72, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x3a, 0x01, 0x2a, 0x42, 0x10, 0x5a, 0x0e, 0x2e,
+	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -805,41 +1065,50 @@ func file_manager_proto_rawDescGZIP() []byte {
 	return file_manager_proto_rawDescData
 }
 
-var file_manager_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_manager_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_manager_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_manager_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_manager_proto_goTypes = []interface{}{
 	(GetNodeResponse_Error_Code)(0), // 0: protoManager.GetNodeResponse.Error.Code
 	(LoginResponse_Error_Code)(0),   // 1: protoManager.LoginResponse.Error.Code
-	(*NodeAgent)(nil),               // 2: protoManager.NodeAgent
-	(*RegistrateResponse)(nil),      // 3: protoManager.RegistrateResponse
-	(*RegistrateRequest)(nil),       // 4: protoManager.RegistrateRequest
-	(*GetNodeRequest)(nil),          // 5: protoManager.GetNodeRequest
-	(*GetNodeResponse)(nil),         // 6: protoManager.GetNodeResponse
-	(*LoginRequest)(nil),            // 7: protoManager.LoginRequest
-	(*LoginResponse)(nil),           // 8: protoManager.LoginResponse
-	(*JWT)(nil),                     // 9: protoManager.JWT
-	(*GetNodeResponse_Error)(nil),   // 10: protoManager.GetNodeResponse.Error
-	(*LoginResponse_Error)(nil),     // 11: protoManager.LoginResponse.Error
+	(RefreshResponse_Error_Code)(0), // 2: protoManager.RefreshResponse.Error.Code
+	(*NodeAgent)(nil),               // 3: protoManager.NodeAgent
+	(*RegistrateResponse)(nil),      // 4: protoManager.RegistrateResponse
+	(*RegistrateRequest)(nil),       // 5: protoManager.RegistrateRequest
+	(*GetNodeRequest)(nil),          // 6: protoManager.GetNodeRequest
+	(*GetNodeResponse)(nil),         // 7: protoManager.GetNodeResponse
+	(*LoginRequest)(nil),            // 8: protoManager.LoginRequest
+	(*LoginResponse)(nil),           // 9: protoManager.LoginResponse
+	(*JWT)(nil),                     // 10: protoManager.JWT
+	(*RefreshRequest)(nil),          // 11: protoManager.RefreshRequest
+	(*RefreshResponse)(nil),         // 12: protoManager.RefreshResponse
+	(*GetNodeResponse_Error)(nil),   // 13: protoManager.GetNodeResponse.Error
+	(*LoginResponse_Error)(nil),     // 14: protoManager.LoginResponse.Error
+	(*RefreshResponse_Error)(nil),   // 15: protoManager.RefreshResponse.Error
 }
 var file_manager_proto_depIdxs = []int32{
-	2,  // 0: protoManager.RegistrateResponse.nodeAgent:type_name -> protoManager.NodeAgent
-	2,  // 1: protoManager.GetNodeResponse.nodeAgent:type_name -> protoManager.NodeAgent
-	10, // 2: protoManager.GetNodeResponse.error:type_name -> protoManager.GetNodeResponse.Error
-	9,  // 3: protoManager.LoginResponse.jwt:type_name -> protoManager.JWT
-	11, // 4: protoManager.LoginResponse.error:type_name -> protoManager.LoginResponse.Error
-	0,  // 5: protoManager.GetNodeResponse.Error.code:type_name -> protoManager.GetNodeResponse.Error.Code
-	1,  // 6: protoManager.LoginResponse.Error.code:type_name -> protoManager.LoginResponse.Error.Code
-	4,  // 7: protoManager.manager.Registrate:input_type -> protoManager.RegistrateRequest
-	5,  // 8: protoManager.manager.GetNode:input_type -> protoManager.GetNodeRequest
-	7,  // 9: protoManager.manager.Login:input_type -> protoManager.LoginRequest
-	3,  // 10: protoManager.manager.Registrate:output_type -> protoManager.RegistrateResponse
-	6,  // 11: protoManager.manager.GetNode:output_type -> protoManager.GetNodeResponse
-	8,  // 12: protoManager.manager.Login:output_type -> protoManager.LoginResponse
-	10, // [10:13] is the sub-list for method output_type
-	7,  // [7:10] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	3,  // 0: protoManager.RegistrateResponse.nodeAgent:type_name -> protoManager.NodeAgent
+	3,  // 1: protoManager.GetNodeResponse.nodeAgent:type_name -> protoManager.NodeAgent
+	13, // 2: protoManager.GetNodeResponse.error:type_name -> protoManager.GetNodeResponse.Error
+	10, // 3: protoManager.LoginResponse.jwt:type_name -> protoManager.JWT
+	14, // 4: protoManager.LoginResponse.error:type_name -> protoManager.LoginResponse.Error
+	10, // 5: protoManager.RefreshResponse.jwt:type_name -> protoManager.JWT
+	15, // 6: protoManager.RefreshResponse.error:type_name -> protoManager.RefreshResponse.Error
+	0,  // 7: protoManager.GetNodeResponse.Error.code:type_name -> protoManager.GetNodeResponse.Error.Code
+	1,  // 8: protoManager.LoginResponse.Error.code:type_name -> protoManager.LoginResponse.Error.Code
+	2,  // 9: protoManager.RefreshResponse.Error.code:type_name -> protoManager.RefreshResponse.Error.Code
+	5,  // 10: protoManager.manager.Registrate:input_type -> protoManager.RegistrateRequest
+	6,  // 11: protoManager.manager.GetNode:input_type -> protoManager.GetNodeRequest
+	8,  // 12: protoManager.manager.Login:input_type -> protoManager.LoginRequest
+	11, // 13: protoManager.manager.Refresh:input_type -> protoManager.RefreshRequest
+	4,  // 14: protoManager.manager.Registrate:output_type -> protoManager.RegistrateResponse
+	7,  // 15: protoManager.manager.GetNode:output_type -> protoManager.GetNodeResponse
+	9,  // 16: protoManager.manager.Login:output_type -> protoManager.LoginResponse
+	12, // 17: protoManager.manager.Refresh:output_type -> protoManager.RefreshResponse
+	14, // [14:18] is the sub-list for method output_type
+	10, // [10:14] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_manager_proto_init() }
@@ -945,7 +1214,7 @@ func file_manager_proto_init() {
 			}
 		}
 		file_manager_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetNodeResponse_Error); i {
+			switch v := v.(*RefreshRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -957,7 +1226,43 @@ func file_manager_proto_init() {
 			}
 		}
 		file_manager_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RefreshResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetNodeResponse_Error); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*LoginResponse_Error); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RefreshResponse_Error); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -977,13 +1282,17 @@ func file_manager_proto_init() {
 		(*LoginResponse_Jwt)(nil),
 		(*LoginResponse_Error_)(nil),
 	}
+	file_manager_proto_msgTypes[9].OneofWrappers = []interface{}{
+		(*RefreshResponse_Jwt)(nil),
+		(*RefreshResponse_Error_)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_manager_proto_rawDesc,
-			NumEnums:      2,
-			NumMessages:   10,
+			NumEnums:      3,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
