@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"regexp"
 	"time"
+	"unicode/utf8"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/nedostupno/zinaida/internal/auth"
+	"github.com/nedostupno/zinaida/internal/models"
 	"github.com/nedostupno/zinaida/proto/protoAgent"
 	"github.com/nedostupno/zinaida/proto/protoManager"
 	"golang.org/x/crypto/bcrypt"
@@ -413,5 +416,254 @@ func (s *Server) Refresh(ctx context.Context, r *protoManager.RefreshRequest) (*
 			},
 		},
 	}
+	return resp, nil
+}
+
+func (s *Server) CreateNode(ctx context.Context, r *protoManager.CreateNodeRequest) (*protoManager.CreateNodeResponse, error) {
+	internalError := &protoManager.CreateNodeResponse{
+		Result: &protoManager.CreateNodeResponse_Error_{
+			Error: &protoManager.CreateNodeResponse_Error{
+				Message: "An unexpected error has occurred",
+				Code:    0,
+			},
+		},
+	}
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		s.logger.WhithErrorFields(fmt.Errorf("failed to get metadata from incomming context")).Error()
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
+	/*
+		Как происходит регистрация ноды в зависимости от переданных данных.
+
+
+			Нам могут передать:
+				- Домен
+				- IP
+				- Домен + IP
+
+
+			# Передан только домен:
+				- Получаем ip из A записей домена
+					- Если не удалось получить ip, то возвращаем ошибку,
+					- Если ip получен, то выполняем grpc Ping, чтобы удостовериться, что на сервере установлено и запущенно наше ПО
+						- Если Ping прошел успешно, то регистрируем ноду-агента
+						- Если нет, то возвращаем ошибку
+
+			# Передан только ip
+				- Проверяем, что передан валидный ip
+			  		- Если все в порядке, то выполняем grpc Ping, чтобы удостовериться, что на сервере установлено и запущенно наше ПО
+						- Если Ping прошел успешно, то регистрируем ноду-агента
+						- Если нет, то возвращаем ошибку
+
+					- Если ip не валиден, то возвращаем ошибку
+
+			# Передан ip + домен
+				- Получаем ip из А записей домена
+				- Проверяем является ли переданный ip одним из ip в А записях домена
+					- Если все в порядке, то выполняем grpc Ping, чтобы удостовериться, что на сервере установлено и запущенно наше ПО
+						- Если Ping прошел успешно, то регистрируем ноду-агента
+						- Если нет, то возвращаем ошибку
+
+					- Если ip нет, то возвращаем ошибку
+	*/
+
+	n := models.NodeAgent{
+		Ip:     r.Ip,
+		Domain: r.Domain,
+	}
+
+	if n.Domain == "" && n.Ip == "" {
+		resp := &protoManager.CreateNodeResponse{
+			Result: &protoManager.CreateNodeResponse_Error_{
+				Error: &protoManager.CreateNodeResponse_Error{
+					Message: "Neither domain nor ip address was sent",
+					Code:    5,
+				},
+			},
+		}
+		md.Append("x-http-code", "400")
+		grpc.SendHeader(ctx, md)
+		return resp, nil
+	}
+
+	if n.Domain != "" {
+		reg, err := regexp.Compile(`^([A-Za-zА-Яа-я0-9-]{1,63}\.)+[A-Za-zА-Яа-я0-9]{2,6}$`)
+		if err != nil {
+			s.logger.WhithErrorFields(err).Error("failed to compile pattern for regular expression ")
+			md.Append("x-http-code", "500")
+			grpc.SendHeader(ctx, md)
+			return internalError, nil
+		}
+
+		ok := reg.MatchString(n.Domain)
+		if !ok {
+			resp := &protoManager.CreateNodeResponse{
+				Result: &protoManager.CreateNodeResponse_Error_{
+					Error: &protoManager.CreateNodeResponse_Error{
+						Message: "Specified domain is not valid",
+						Code:    4,
+					},
+				},
+			}
+			md.Append("x-http-code", "400")
+			grpc.SendHeader(ctx, md)
+			return resp, nil
+		}
+
+		len := utf8.RuneCountInString(n.Domain)
+		if len > 253 {
+			resp := &protoManager.CreateNodeResponse{
+				Result: &protoManager.CreateNodeResponse_Error_{
+					Error: &protoManager.CreateNodeResponse_Error{
+						Message: "Specified domain is too long",
+						Code:    4,
+					},
+				},
+			}
+			md.Append("x-http-code", "400")
+			grpc.SendHeader(ctx, md)
+			return resp, nil
+		}
+
+		// Проверяем существование домена и получаем его ip адрес
+		resolvedIPs, err := net.LookupHost(n.Domain)
+		if err != nil {
+			if e, ok := err.(*net.DNSError); ok && e.IsNotFound {
+				resp := &protoManager.CreateNodeResponse{
+					Result: &protoManager.CreateNodeResponse_Error_{
+						Error: &protoManager.CreateNodeResponse_Error{
+							Message: fmt.Sprintf("Failed to get domain information %s", n.Domain),
+							Code:    4,
+						},
+					},
+				}
+				md.Append("x-http-code", "200")
+				grpc.SendHeader(ctx, md)
+				return resp, nil
+			}
+			s.logger.WhithErrorFields(err).Errorf("Unable to find ip for domain: %s", n.Domain)
+			md.Append("x-http-code", "500")
+			grpc.SendHeader(ctx, md)
+			return internalError, nil
+		}
+
+		if n.Ip == "" {
+			n.Ip = resolvedIPs[0]
+		} else {
+			// Проверяем является ли переданный ip одним из ip из ресурсных записей домена
+			var ok bool
+			for _, ip := range resolvedIPs {
+				if ip == n.Ip {
+					ok = true
+				}
+			}
+
+			if r := net.ParseIP(n.Ip); r == nil {
+				resp := &protoManager.CreateNodeResponse{
+					Result: &protoManager.CreateNodeResponse_Error_{
+						Error: &protoManager.CreateNodeResponse_Error{
+							Message: "Specified ip address is not valid",
+							Code:    3,
+						},
+					},
+				}
+				md.Append("x-http-code", "400")
+				grpc.SendHeader(ctx, md)
+				return resp, nil
+			}
+
+			if !ok && n.Ip != "" {
+				resp := &protoManager.CreateNodeResponse{
+					Result: &protoManager.CreateNodeResponse_Error_{
+						Error: &protoManager.CreateNodeResponse_Error{
+							Message: "Specified ip address and ip address from domain resource records are different",
+							Code:    5,
+						},
+					},
+				}
+				md.Append("x-http-code", "400")
+				grpc.SendHeader(ctx, md)
+				return resp, nil
+			}
+		}
+	}
+
+	_, err := s.Ping(n.Ip, s.cfg.Grpc.AgentsPort, s.cfg.Grpc.PingTimeout)
+	if err != nil {
+		resp := &protoManager.CreateNodeResponse{
+			Result: &protoManager.CreateNodeResponse_Error_{
+				Error: &protoManager.CreateNodeResponse_Error{
+					Message: "Failed to connect to agent node",
+					Code:    2,
+				},
+			},
+		}
+		md.Append("x-http-code", "200")
+		grpc.SendHeader(ctx, md)
+		return resp, nil
+	}
+
+	isExistByDomain, err := s.repo.Nodes.CheckNodeExistenceByDomain(n.Domain)
+	if err != nil {
+		s.logger.WhithErrorFields(err).Errorf("failed to add node %v to monitoring", n)
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+	isExistByIP, err := s.repo.Nodes.CheckNodeExistenceByIP(n.Ip)
+	if err != nil {
+		s.logger.WhithErrorFields(err).Errorf("failed to add node %v to monitoring", n)
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
+	if (isExistByDomain && n.Domain != "") || isExistByIP {
+		resp := &protoManager.CreateNodeResponse{
+			Result: &protoManager.CreateNodeResponse_Error_{
+				Error: &protoManager.CreateNodeResponse_Error{
+					Message: "Node agent is already exist in monitoring",
+					Code:    1,
+				},
+			},
+		}
+		md.Append("x-http-code", "200")
+		grpc.SendHeader(ctx, md)
+		return resp, nil
+	}
+
+	_, err = s.repo.AddNode(n.Ip, n.Domain)
+	if err != nil {
+		s.logger.WhithErrorFields(err).Errorf("failed to add node %v to monitoring", n)
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
+	node, err := s.repo.GetNodeByIP(n.Ip)
+	if err != nil {
+		s.logger.WhithErrorFields(err).Errorf("failed to get node with ip %s from database ", n.Ip)
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
+	md.Append("x-http-code", "200")
+	grpc.SendHeader(ctx, md)
+	resp := &protoManager.CreateNodeResponse{
+		Result: &protoManager.CreateNodeResponse_NodeAgent{
+			NodeAgent: &protoManager.NodeAgent{
+				Id:     int64(node.Id),
+				Ip:     node.Ip,
+				Domain: node.Domain,
+			},
+		},
+	}
+
 	return resp, nil
 }
