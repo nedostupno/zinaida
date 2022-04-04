@@ -6,6 +6,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/nedostupno/zinaida/internal/auth"
 	"github.com/nedostupno/zinaida/proto/protoAgent"
 	"github.com/nedostupno/zinaida/proto/protoManager"
@@ -291,4 +292,126 @@ func (s *Server) Login(ctx context.Context, r *protoManager.LoginRequest) (*prot
 	md.Append("x-http-code", "401")
 	grpc.SendHeader(ctx, md)
 	return IncorrectDataError, nil
+}
+
+func (s *Server) Refresh(ctx context.Context, r *protoManager.RefreshRequest) (*protoManager.RefreshResponse, error) {
+	invalidRefreshTokenError := &protoManager.RefreshResponse{
+		Result: &protoManager.RefreshResponse_Error_{
+			Error: &protoManager.RefreshResponse_Error{
+				Message: "invalid refresh token",
+				Code:    1,
+			},
+		},
+	}
+
+	internalError := &protoManager.RefreshResponse{
+		Result: &protoManager.RefreshResponse_Error_{
+			Error: &protoManager.RefreshResponse_Error{
+				Message: "An unexpected error has occurred",
+				Code:    0,
+			},
+		},
+	}
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		s.logger.WhithErrorFields(fmt.Errorf("failed to get metadata from incomming context")).Error()
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
+	if r.RefreshToken == "" {
+		md.Append("x-http-code", "400")
+		grpc.SendHeader(ctx, md)
+		resp := &protoManager.RefreshResponse{
+			Result: &protoManager.RefreshResponse_Error_{
+				Error: &protoManager.RefreshResponse_Error{
+					Message: "Missed refresh token",
+					Code:    2,
+				},
+			},
+		}
+		return resp, nil
+	}
+
+	claims := &auth.CustomClaims{}
+
+	token, err := jwt.ParseWithClaims(r.RefreshToken, claims, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(s.cfg.Jwt.SecretKeyForRefreshToken), nil
+	})
+
+	// Ошибка будет выброшена даже в том случае, если токен истек, так что ручные проверки не требуются
+	if err != nil || !token.Valid {
+		md.Append("x-http-code", "400")
+		grpc.SendHeader(ctx, md)
+		return invalidRefreshTokenError, nil
+	}
+
+	exist, err := s.repo.Users.IsExist(claims.Username)
+	if err != nil {
+		s.logger.WhithErrorFields(err).Errorf("failed to check the existence of user %s in the database", claims.Username)
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
+	if !exist {
+		md.Append("x-http-code", "400")
+		grpc.SendHeader(ctx, md)
+		return invalidRefreshTokenError, nil
+	}
+
+	oldRefreshToken, err := s.repo.Users.GetRefreshToken(claims.Username)
+	if err != nil {
+		s.logger.WhithErrorFields(err).Errorf("failed to get refresh token for user %s from database", claims.Username)
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
+	if r.RefreshToken != oldRefreshToken {
+		md.Append("x-http-code", "400")
+		grpc.SendHeader(ctx, md)
+		return invalidRefreshTokenError, nil
+	}
+
+	newJwt, err := auth.GenerateJWTToken(claims.Username, s.cfg.Jwt.SecretKeyForAccessToken, s.cfg.Jwt.AccessTokenTTL)
+	if err != nil {
+		s.logger.WhithErrorFields(err).Errorf("failed to generate JWT access token for user %s ", claims.Username)
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
+	newRefresh, err := auth.GenerateRefreshToken(claims.Username, s.cfg.Jwt.SecretKeyForRefreshToken, s.cfg.Jwt.RefreshTokenTTL)
+	if err != nil {
+		s.logger.WhithErrorFields(err).Errorf("failed to generate JWT refresh token for user %s", claims.Username)
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
+	_, err = s.repo.Users.UpdateRefreshToken(claims.Username, newRefresh)
+	if err != nil {
+		s.logger.WhithErrorFields(err).Errorf("failed to update JWT refresh in token database for user %s", claims.Username)
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
+	md.Append("x-http-code", "200")
+	grpc.SendHeader(ctx, md)
+	resp := &protoManager.RefreshResponse{
+		Result: &protoManager.RefreshResponse_Jwt{
+			Jwt: &protoManager.JWT{
+				AccessToken:  newJwt,
+				RefreshToken: newRefresh,
+			},
+		},
+	}
+	return resp, nil
 }

@@ -35,6 +35,12 @@ service manager {
             body: "*"
         };
     }
+    rpc Refresh (RefreshRequest) returns (RefreshResponse) {
+        option (google.api.http) = {
+            post: "/api/refresh"
+            body: "*"
+        };
+    }
 }
 
 message GetNodeRequest{
@@ -84,4 +90,26 @@ message LoginResponse {
 message JWT {
     string access_token = 2;
     string refresh_token = 3;
+}
+
+message RefreshRequest {
+    string refresh_token = 1;
+}
+
+message RefreshResponse {
+    oneof result {
+        JWT jwt = 1;
+        Error error = 2;
+    }
+
+    message Error {
+        string message = 1;
+        Code code = 2;
+        
+        enum Code {
+            INTERNAL_ERROR = 0;
+            INVALID_REFRESH_TOKEN = 1;
+            MISSED_REFRESH_TOKEN = 2;
+        }
+    }
 }
