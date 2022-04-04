@@ -31,8 +31,6 @@ func (s *Server) JwtAuthenticationInterceptor(ctx context.Context, req interface
 		}
 	}
 
-	fmt.Printf("info.FullMethod: %v\n", info.FullMethod)
-
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		s.logger.WhithErrorFields(fmt.Errorf("failed to get metadata from incomming context")).Error()

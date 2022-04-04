@@ -29,6 +29,12 @@ service manager {
             get: "/api/nodes/{id}"
         };
     };
+    rpc CreateNode (CreateNodeRequest) returns (CreateNodeResponse) {
+        option (google.api.http) = {
+            post: "/api/nodes"
+            body: "*"
+        };
+    }
     rpc Login (LoginRequest) returns (LoginResponse) {
         option (google.api.http) = {
             post: "/api/login"
@@ -61,6 +67,32 @@ message GetNodeResponse{
         enum Code {
             INTERNAL_ERROR = 0;
             NODE_NOT_EXIST = 1;
+        }
+    }
+}
+
+message CreateNodeRequest {
+    string ip = 1;
+    string domain = 2;
+}
+
+message CreateNodeResponse {
+    oneof result {
+        NodeAgent nodeAgent = 1;
+        Error error = 2;
+    }
+    
+    message Error {
+        string message = 1;
+        Code code = 2;
+        
+        enum Code {
+            INTERNAL_ERROR = 0;
+            NODE_ALREADY_EXIST = 1;
+            NODE_IS_UNREACHABLE = 2;
+            INVALID_IP_ADDRESS = 3;
+            INVALID_DOMAIN = 4;
+            INVAILD_DOMAIN_AND_IP = 5;
         }
     }
 }
