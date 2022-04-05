@@ -35,6 +35,11 @@ service manager {
             body: "*"
         };
     }
+    rpc DeleteNode (DeleteNodeRequest) returns (DeleteNodeResponse){
+        option (google.api.http) = {
+            delete: "/api/nodes/{id}"
+        };
+    };
     rpc Login (LoginRequest) returns (LoginResponse) {
         option (google.api.http) = {
             post: "/api/login"
@@ -93,6 +98,31 @@ message CreateNodeResponse {
             INVALID_IP_ADDRESS = 3;
             INVALID_DOMAIN = 4;
             INVAILD_DOMAIN_AND_IP = 5;
+        }
+    }
+}
+
+
+message DeleteNodeRequest {
+    int64 id = 1;
+}
+
+message DeleteNodeResponse {
+    oneof result {
+        Success success = 1;
+        Error error = 2;
+    }
+    
+    message Success {
+    }
+    
+    message Error {
+        string message = 1;
+        Code code = 2;
+        
+        enum Code {
+            INTERNAL_ERROR = 0;
+            NODE_NOT_EXIST = 1;
         }
     }
 }

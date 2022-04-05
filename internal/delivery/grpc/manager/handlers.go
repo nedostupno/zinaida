@@ -667,3 +667,62 @@ func (s *Server) CreateNode(ctx context.Context, r *protoManager.CreateNodeReque
 
 	return resp, nil
 }
+
+func (s *Server) DeleteNode(ctx context.Context, r *protoManager.DeleteNodeRequest) (*protoManager.DeleteNodeResponse, error) {
+	internalError := &protoManager.DeleteNodeResponse{
+		Result: &protoManager.DeleteNodeResponse_Error_{
+			Error: &protoManager.DeleteNodeResponse_Error{
+				Message: "An unexpected error has occurred",
+				Code:    0,
+			},
+		},
+	}
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		s.logger.WhithErrorFields(fmt.Errorf("failed to get metadata from incomming context")).Error()
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
+	isExist, err := s.repo.Nodes.CheckNodeExistenceByID(int(r.Id))
+	if err != nil {
+		s.logger.WhithErrorFields(err).Errorf("не удалось проверить наличие ноды с id %s в базе данных", r.Id)
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
+	if !isExist {
+		resp := &protoManager.DeleteNodeResponse{
+			Result: &protoManager.DeleteNodeResponse_Error_{
+				Error: &protoManager.DeleteNodeResponse_Error{
+					Message: fmt.Sprintf("Agent nodes with id %d were not found in monitoring", r.Id),
+					Code:    1,
+				},
+			},
+		}
+		md.Append("x-http-code", "404")
+		grpc.SendHeader(ctx, md)
+		return resp, nil
+	}
+
+	_, err = s.repo.DeleteNode(int(r.Id))
+	if err != nil {
+		s.logger.WhithErrorFields(err).Errorf("failed to remove node with id %s from the database", r.Id)
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
+	resp := &protoManager.DeleteNodeResponse{
+		Result: &protoManager.DeleteNodeResponse_Success_{
+			Success: &protoManager.DeleteNodeResponse_Success{},
+		},
+	}
+
+	md.Append("x-http-code", "200")
+	grpc.SendHeader(ctx, md)
+	return resp, nil
+}
