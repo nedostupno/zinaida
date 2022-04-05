@@ -658,11 +658,14 @@ func (s *Server) CreateNode(ctx context.Context, r *protoManager.CreateNodeReque
 	}
 
 	resp := &protoManager.CreateNodeResponse{
-		Result: &protoManager.CreateNodeResponse_NodeAgent{
-			NodeAgent: &protoManager.NodeAgent{
-				Id:     int64(node.Id),
-				Ip:     node.Ip,
-				Domain: node.Domain,
+		Result: &protoManager.CreateNodeResponse_Success_{
+			Success: &protoManager.CreateNodeResponse_Success{
+				Message: "Agent node successfully registered",
+				Node: &protoManager.NodeAgent{
+					Id:     int64(node.Id),
+					Ip:     node.Ip,
+					Domain: node.Domain,
+				},
 			},
 		},
 	}
