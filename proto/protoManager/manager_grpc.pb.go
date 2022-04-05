@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ManagerClient interface {
 	Registrate(ctx context.Context, in *RegistrateRequest, opts ...grpc.CallOption) (*RegistrateResponse, error)
+	GetNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error)
 	GetNode(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error)
 	CreateNode(ctx context.Context, in *CreateNodeRequest, opts ...grpc.CallOption) (*CreateNodeResponse, error)
 	DeleteNode(ctx context.Context, in *DeleteNodeRequest, opts ...grpc.CallOption) (*DeleteNodeResponse, error)
@@ -41,6 +42,15 @@ func NewManagerClient(cc grpc.ClientConnInterface) ManagerClient {
 func (c *managerClient) Registrate(ctx context.Context, in *RegistrateRequest, opts ...grpc.CallOption) (*RegistrateResponse, error) {
 	out := new(RegistrateResponse)
 	err := c.cc.Invoke(ctx, "/protoManager.manager/Registrate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *managerClient) GetNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error) {
+	out := new(GetNodesResponse)
+	err := c.cc.Invoke(ctx, "/protoManager.manager/GetNodes", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -97,6 +107,7 @@ func (c *managerClient) Refresh(ctx context.Context, in *RefreshRequest, opts ..
 // for forward compatibility
 type ManagerServer interface {
 	Registrate(context.Context, *RegistrateRequest) (*RegistrateResponse, error)
+	GetNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error)
 	GetNode(context.Context, *GetNodeRequest) (*GetNodeResponse, error)
 	CreateNode(context.Context, *CreateNodeRequest) (*CreateNodeResponse, error)
 	DeleteNode(context.Context, *DeleteNodeRequest) (*DeleteNodeResponse, error)
@@ -111,6 +122,9 @@ type UnimplementedManagerServer struct {
 
 func (UnimplementedManagerServer) Registrate(context.Context, *RegistrateRequest) (*RegistrateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Registrate not implemented")
+}
+func (UnimplementedManagerServer) GetNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNodes not implemented")
 }
 func (UnimplementedManagerServer) GetNode(context.Context, *GetNodeRequest) (*GetNodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNode not implemented")
@@ -154,6 +168,24 @@ func _Manager_Registrate_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ManagerServer).Registrate(ctx, req.(*RegistrateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Manager_GetNodes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNodesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ManagerServer).GetNodes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/protoManager.manager/GetNodes",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ManagerServer).GetNodes(ctx, req.(*GetNodesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -258,6 +290,10 @@ var Manager_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Registrate",
 			Handler:    _Manager_Registrate_Handler,
+		},
+		{
+			MethodName: "GetNodes",
+			Handler:    _Manager_GetNodes_Handler,
 		},
 		{
 			MethodName: "GetNode",
