@@ -188,11 +188,14 @@ func (s *Server) GetNode(ctx context.Context, r *protoManager.GetNodeRequest) (*
 	}
 
 	resp := &protoManager.GetNodeResponse{
-		Result: &protoManager.GetNodeResponse_NodeAgent{
-			NodeAgent: &protoManager.NodeAgent{
-				Id:     int64(node.Id),
-				Ip:     node.Ip,
-				Domain: node.Domain,
+		Result: &protoManager.GetNodeResponse_Success_{
+			Success: &protoManager.GetNodeResponse_Success{
+				Message: "Information about the node-agent was successfully received",
+				Node: &protoManager.NodeAgent{
+					Id:     int64(node.Id),
+					Ip:     node.Ip,
+					Domain: node.Domain,
+				},
 			},
 		},
 	}
