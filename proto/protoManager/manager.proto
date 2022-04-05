@@ -108,10 +108,13 @@ message GetNodeRequest{
 message GetNodeResponse{
 
     oneof result {
-        NodeAgent nodeAgent = 1;
+        Success success = 1;
         Error error = 2;
     }
-    
+    message Success {
+        string message = 1;
+        NodeAgent node = 2;
+    }
     message Error {
         string message = 1;
         Code code = 2;
