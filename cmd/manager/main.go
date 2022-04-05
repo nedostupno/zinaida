@@ -8,7 +8,6 @@ import (
 
 	"github.com/nedostupno/zinaida/internal/config"
 	"github.com/nedostupno/zinaida/internal/delivery/grpc/manager"
-	api "github.com/nedostupno/zinaida/internal/delivery/rest"
 	"github.com/nedostupno/zinaida/internal/repository"
 	"github.com/nedostupno/zinaida/logger"
 	"github.com/sirupsen/logrus"
@@ -37,9 +36,5 @@ func main() {
 	srv := manager.NewManagerServer(repo, log, cfg)
 	go srv.RunServer(ctx)
 
-	go srv.RunGatewayServer(ctx)
-
-	a := api.GetApi(repo, log, cfg, srv)
-	a.InitRouter()
-	a.Run(ctx)
+	srv.RunGatewayServer(ctx)
 }

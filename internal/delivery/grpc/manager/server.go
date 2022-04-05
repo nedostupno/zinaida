@@ -87,8 +87,7 @@ func (s *Server) RunGatewayServer(ctx context.Context) {
 	}
 
 	server := http.Server{
-		// TODO: заменить addr на адрес для rest api
-		Addr:    ":8080",
+		Addr:    fmt.Sprintf("%s:%d", s.cfg.Rest.Ip, s.cfg.Rest.Port),
 		Handler: s.LoggingMidleware(wsproxy.WebsocketProxy(mux)),
 	}
 
