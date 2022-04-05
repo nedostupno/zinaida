@@ -653,8 +653,6 @@ func (s *Server) CreateNode(ctx context.Context, r *protoManager.CreateNodeReque
 		return internalError, nil
 	}
 
-	md.Append("x-http-code", "200")
-	grpc.SendHeader(ctx, md)
 	resp := &protoManager.CreateNodeResponse{
 		Result: &protoManager.CreateNodeResponse_NodeAgent{
 			NodeAgent: &protoManager.NodeAgent{
@@ -664,7 +662,8 @@ func (s *Server) CreateNode(ctx context.Context, r *protoManager.CreateNodeReque
 			},
 		},
 	}
-
+	md.Append("x-http-code", "200")
+	grpc.SendHeader(ctx, md)
 	return resp, nil
 }
 
@@ -855,9 +854,6 @@ func (s *Server) RebootNode(ctx context.Context, r *protoManager.RebootNodeReque
 		grpc.SendHeader(ctx, md)
 		return internalError, nil
 	}
-	md.Append("x-http-code", "200")
-	grpc.SendHeader(ctx, md)
-
 	resp := &protoManager.RebootNodeResponse{
 		Result: &protoManager.RebootNodeResponse_Success_{
 			Success: &protoManager.RebootNodeResponse_Success{
@@ -870,5 +866,95 @@ func (s *Server) RebootNode(ctx context.Context, r *protoManager.RebootNodeReque
 			},
 		},
 	}
+	md.Append("x-http-code", "200")
+	grpc.SendHeader(ctx, md)
+	return resp, nil
+}
+
+func (s *Server) GetNodeStat(ctx context.Context, r *protoManager.GetNodeStatRequest) (*protoManager.GetNodeStatResponse, error) {
+	internalError := &protoManager.GetNodeStatResponse{
+		Result: &protoManager.GetNodeStatResponse_Error_{
+			Error: &protoManager.GetNodeStatResponse_Error{
+				Message: "An unexpected error has occurred",
+				Code:    0,
+			},
+		},
+	}
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		s.logger.WhithErrorFields(fmt.Errorf("failed to get metadata from incomming context")).Error()
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
+	isExist, err := s.repo.Nodes.CheckNodeExistenceByID(int(r.Id))
+	if err != nil {
+		s.logger.WhithErrorFields(err).Errorf("failed to check if node with id %s exists in the database ", r.Id)
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
+	if !isExist {
+		resp := &protoManager.GetNodeStatResponse{
+			Result: &protoManager.GetNodeStatResponse_Error_{
+				Error: &protoManager.GetNodeStatResponse_Error{
+					Message: fmt.Sprintf("Agent nodes with id %d were not found in monitoring", r.Id),
+					Code:    1,
+				},
+			},
+		}
+		md.Append("x-http-code", "404")
+		grpc.SendHeader(ctx, md)
+		return resp, nil
+	}
+
+	node, err := s.repo.GetNodeByID(int(r.Id))
+	if err != nil {
+		s.logger.WhithErrorFields(err).Errorf("failed to get node with id %s from database ", r.Id)
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+	_, err = s.Ping(node.Ip, s.cfg.Grpc.AgentsPort, s.cfg.Grpc.PingTimeout)
+	if err != nil {
+		resp := &protoManager.GetNodeStatResponse{
+			Result: &protoManager.GetNodeStatResponse_Error_{
+				Error: &protoManager.GetNodeStatResponse_Error{
+					Message: fmt.Sprintf("Failed to connect to agent node with id  %d", node.Id),
+					Code:    2,
+				},
+			},
+		}
+		md.Append("x-http-code", "200")
+		grpc.SendHeader(ctx, md)
+		return resp, nil
+	}
+
+	stat, err := s.GetStat(node.Ip, s.cfg.Grpc.AgentsPort)
+	if err != nil {
+		s.logger.WhithErrorFields(err).Errorf("failed to get grpc stats about node  %v", node)
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
+	resp := &protoManager.GetNodeStatResponse{
+		Result: &protoManager.GetNodeStatResponse_Success_{
+			Success: &protoManager.GetNodeStatResponse_Success{
+				Message: fmt.Sprintf("Statistics successfuly collected from agent node with id %d", node.Id),
+				Node: &protoManager.NodeAgent{
+					Id:     int64(node.Id),
+					Ip:     node.Ip,
+					Domain: node.Domain,
+				},
+				Stat: stat.ServerStat,
+			},
+		},
+	}
+	md.Append("x-http-code", "200")
+	grpc.SendHeader(ctx, md)
 	return resp, nil
 }

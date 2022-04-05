@@ -5,6 +5,7 @@ package protoManager;
 option go_package = "github.com/nedostupno/zinaida/proto/protoManager";
 
 import "google/api/annotations.proto";
+import "protoAgent/agent.proto";
 
 message NodeAgent {
     int64 id = 1;
@@ -47,6 +48,11 @@ service manager {
     rpc RebootNode (RebootNodeRequest) returns (RebootNodeResponse){
         option (google.api.http) = {
             get: "/api/nodes/{id}/reboot"
+        };
+    };
+    rpc GetNodeStat (GetNodeStatRequest) returns (GetNodeStatResponse){
+        option (google.api.http) = {
+            get: "/api/nodes/{id}/stat"
         };
     };
     rpc Login (LoginRequest) returns (LoginResponse) {
@@ -189,7 +195,33 @@ message RebootNodeResponse {
     }
 }
 
+message GetNodeStatRequest {
+    int64 id = 1; 
+}
 
+message GetNodeStatResponse {
+    oneof result {
+        Success success = 1;
+        Error error = 2;
+    }
+    
+    message Success {
+        string message = 1;
+        NodeAgent node = 2;
+        protoAgent.ServerStat stat = 3;
+    }
+    
+    message Error {
+        string message = 1;
+        Code code = 2;
+        
+        enum Code {
+            INTERNAL_ERROR = 0;
+            NODE_NOT_EXIST = 1;
+            NODE_IS_UNREACHABLE = 2;
+        }
+    }
+}
 
 message LoginRequest {
     string username = 1;
