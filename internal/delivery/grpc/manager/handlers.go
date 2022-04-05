@@ -762,10 +762,10 @@ func (s *Server) GetNodes(ctx context.Context, r *protoManager.GetNodesRequest) 
 		return resp, nil
 	}
 
-	node := []*protoManager.NodeAgent{}
+	nodeList := []*protoManager.NodeAgent{}
 
 	for _, v := range nodes {
-		node = append(node, &protoManager.NodeAgent{
+		nodeList = append(nodeList, &protoManager.NodeAgent{
 
 			Domain: v.Domain,
 			Id:     int64(v.Id),
@@ -774,9 +774,10 @@ func (s *Server) GetNodes(ctx context.Context, r *protoManager.GetNodesRequest) 
 	}
 
 	resp := &protoManager.GetNodesResponse{
-		Result: &protoManager.GetNodesResponse_ListNodes_{
-			ListNodes: &protoManager.GetNodesResponse_ListNodes{
-				NodeAgent: node,
+		Result: &protoManager.GetNodesResponse_Success_{
+			Success: &protoManager.GetNodesResponse_Success{
+				Message: "List of nodes received",
+				Nodes:   nodeList,
 			},
 		},
 	}
