@@ -27,6 +27,7 @@ type ManagerClient interface {
 	GetNode(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error)
 	CreateNode(ctx context.Context, in *CreateNodeRequest, opts ...grpc.CallOption) (*CreateNodeResponse, error)
 	DeleteNode(ctx context.Context, in *DeleteNodeRequest, opts ...grpc.CallOption) (*DeleteNodeResponse, error)
+	RebootNode(ctx context.Context, in *RebootNodeRequest, opts ...grpc.CallOption) (*RebootNodeResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	Refresh(ctx context.Context, in *RefreshRequest, opts ...grpc.CallOption) (*RefreshResponse, error)
 }
@@ -84,6 +85,15 @@ func (c *managerClient) DeleteNode(ctx context.Context, in *DeleteNodeRequest, o
 	return out, nil
 }
 
+func (c *managerClient) RebootNode(ctx context.Context, in *RebootNodeRequest, opts ...grpc.CallOption) (*RebootNodeResponse, error) {
+	out := new(RebootNodeResponse)
+	err := c.cc.Invoke(ctx, "/protoManager.manager/RebootNode", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *managerClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
 	out := new(LoginResponse)
 	err := c.cc.Invoke(ctx, "/protoManager.manager/Login", in, out, opts...)
@@ -111,6 +121,7 @@ type ManagerServer interface {
 	GetNode(context.Context, *GetNodeRequest) (*GetNodeResponse, error)
 	CreateNode(context.Context, *CreateNodeRequest) (*CreateNodeResponse, error)
 	DeleteNode(context.Context, *DeleteNodeRequest) (*DeleteNodeResponse, error)
+	RebootNode(context.Context, *RebootNodeRequest) (*RebootNodeResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	Refresh(context.Context, *RefreshRequest) (*RefreshResponse, error)
 	mustEmbedUnimplementedManagerServer()
@@ -134,6 +145,9 @@ func (UnimplementedManagerServer) CreateNode(context.Context, *CreateNodeRequest
 }
 func (UnimplementedManagerServer) DeleteNode(context.Context, *DeleteNodeRequest) (*DeleteNodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteNode not implemented")
+}
+func (UnimplementedManagerServer) RebootNode(context.Context, *RebootNodeRequest) (*RebootNodeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RebootNode not implemented")
 }
 func (UnimplementedManagerServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
@@ -244,6 +258,24 @@ func _Manager_DeleteNode_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Manager_RebootNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RebootNodeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ManagerServer).RebootNode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/protoManager.manager/RebootNode",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ManagerServer).RebootNode(ctx, req.(*RebootNodeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Manager_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LoginRequest)
 	if err := dec(in); err != nil {
@@ -306,6 +338,10 @@ var Manager_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteNode",
 			Handler:    _Manager_DeleteNode_Handler,
+		},
+		{
+			MethodName: "RebootNode",
+			Handler:    _Manager_RebootNode_Handler,
 		},
 		{
 			MethodName: "Login",
