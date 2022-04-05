@@ -113,7 +113,7 @@ func (s *Server) Ping(ip string, port int) (*protoAgent.PingResponse, error) {
 	return resp, nil
 }
 
-func (s *Server) RebootNode(ip string, port int) (*protoAgent.RebootResponse, error) {
+func (s *Server) Reboot(ip string, port int) (*protoAgent.RebootResponse, error) {
 	conn, err := grpc.Dial(fmt.Sprintf("%v:%d", ip, port), grpc.WithInsecure())
 	if err != nil {
 		return nil, err
@@ -688,7 +688,7 @@ func (s *Server) DeleteNode(ctx context.Context, r *protoManager.DeleteNodeReque
 
 	isExist, err := s.repo.Nodes.CheckNodeExistenceByID(int(r.Id))
 	if err != nil {
-		s.logger.WhithErrorFields(err).Errorf("не удалось проверить наличие ноды с id %s в базе данных", r.Id)
+		s.logger.WhithErrorFields(err).Errorf("failed to check if node with id %s exists in the database ", r.Id)
 		md.Append("x-http-code", "500")
 		grpc.SendHeader(ctx, md)
 		return internalError, nil
@@ -783,5 +783,92 @@ func (s *Server) GetNodes(ctx context.Context, r *protoManager.GetNodesRequest) 
 
 	md.Append("x-http-code", "200")
 	grpc.SendHeader(ctx, md)
+	return resp, nil
+}
+
+func (s *Server) RebootNode(ctx context.Context, r *protoManager.RebootNodeRequest) (*protoManager.RebootNodeResponse, error) {
+	internalError := &protoManager.RebootNodeResponse{
+		Result: &protoManager.RebootNodeResponse_Error_{
+			Error: &protoManager.RebootNodeResponse_Error{
+				Message: "An unexpected error has occurred",
+				Code:    0,
+			},
+		},
+	}
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		s.logger.WhithErrorFields(fmt.Errorf("failed to get metadata from incomming context")).Error()
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
+	isExist, err := s.repo.Nodes.CheckNodeExistenceByID(int(r.Id))
+	if err != nil {
+		s.logger.WhithErrorFields(err).Errorf("failed to check if node with id %s exists in the database", r.Id)
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
+	if !isExist {
+		resp := &protoManager.RebootNodeResponse{
+			Result: &protoManager.RebootNodeResponse_Error_{
+				Error: &protoManager.RebootNodeResponse_Error{
+					Message: fmt.Sprintf("Agent nodes with id %d were not found in monitoring", r.Id),
+					Code:    1,
+				},
+			},
+		}
+		md.Append("x-http-code", "404")
+		grpc.SendHeader(ctx, md)
+		return resp, nil
+	}
+
+	node, err := s.repo.GetNodeByID(int(r.Id))
+	if err != nil {
+		s.logger.WhithErrorFields(err).Errorf("failed to get node with id %s from database", r.Id)
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+	_, err = s.Ping(node.Ip, s.cfg.Grpc.AgentsPort, s.cfg.Grpc.PingTimeout)
+	if err != nil {
+		resp := &protoManager.RebootNodeResponse{
+			Result: &protoManager.RebootNodeResponse_Error_{
+				Error: &protoManager.RebootNodeResponse_Error{
+					Message: fmt.Sprintf("Failed to connect to agent node with id %d", r.Id),
+					Code:    2,
+				},
+			},
+		}
+		md.Append("x-http-code", "200")
+		grpc.SendHeader(ctx, md)
+		return resp, nil
+	}
+
+	_, err = s.Reboot(node.Ip, s.cfg.Grpc.AgentsPort)
+	if err != nil {
+		s.logger.WhithErrorFields(err).Errorf("Failed to reboot agent node with id %d", r.Id)
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+	md.Append("x-http-code", "200")
+	grpc.SendHeader(ctx, md)
+
+	resp := &protoManager.RebootNodeResponse{
+		Result: &protoManager.RebootNodeResponse_Success_{
+			Success: &protoManager.RebootNodeResponse_Success{
+				Message: fmt.Sprintf("Agent node with id %d will be restarted in 1 minute", node.Id),
+				Node: &protoManager.NodeAgent{
+					Id:     int64(node.Id),
+					Ip:     node.Ip,
+					Domain: node.Domain,
+				},
+			},
+		},
+	}
 	return resp, nil
 }

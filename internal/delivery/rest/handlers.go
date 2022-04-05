@@ -491,7 +491,7 @@ func (a *api) RebootNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = a.grpc.RebootNode(node.Ip, a.cfg.Grpc.AgentsPort)
+	_, err = a.grpc.Reboot(node.Ip, a.cfg.Grpc.AgentsPort)
 	if err != nil {
 		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to restart agent node with id %d", id)
 		msg := map[string]interface{}{
