@@ -13,6 +13,7 @@ import (
 	"github.com/nedostupno/zinaida/internal/repository"
 	"github.com/nedostupno/zinaida/logger"
 	"github.com/nedostupno/zinaida/proto/protoManager"
+	"github.com/tmc/grpc-websocket-proxy/wsproxy"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -35,7 +36,11 @@ func NewManagerServer(repo *repository.Repository, logger *logger.Logger, cfg *c
 }
 
 func (s *Server) RunServer(ctx context.Context) {
-	srv := grpc.NewServer(grpc_middleware.WithUnaryServerChain(s.JwtAuthenticationInterceptor))
+	srv := grpc.NewServer(
+		grpc_middleware.WithUnaryServerChain(s.JwtAuthenticationInterceptor),
+		grpc_middleware.WithStreamServerChain(s.StreamServerJWTInterceptor),
+	)
+
 	port := s.cfg.Grpc.Port
 	ip := s.cfg.Grpc.Ip
 
@@ -84,7 +89,7 @@ func (s *Server) RunGatewayServer(ctx context.Context) {
 	server := http.Server{
 		// TODO: заменить addr на адрес для rest api
 		Addr:    ":8080",
-		Handler: s.LoggingMidleware(mux),
+		Handler: s.LoggingMidleware(wsproxy.WebsocketProxy(mux)),
 	}
 
 	go func() {

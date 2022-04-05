@@ -13,6 +13,7 @@ import (
 	"github.com/nedostupno/zinaida/internal/models"
 	"github.com/nedostupno/zinaida/proto/protoAgent"
 	"github.com/nedostupno/zinaida/proto/protoManager"
+	"github.com/nedostupno/zinaida/traceroute"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -957,4 +958,133 @@ func (s *Server) GetNodeStat(ctx context.Context, r *protoManager.GetNodeStatReq
 	md.Append("x-http-code", "200")
 	grpc.SendHeader(ctx, md)
 	return resp, nil
+}
+
+func (s *Server) GetMap(r *protoManager.GetMapRequest, srv protoManager.Manager_GetMapServer) error {
+	internalError := &protoManager.GetMapResponse{
+		Result: &protoManager.GetMapResponse_Error_{
+			Error: &protoManager.GetMapResponse_Error{
+				Message: "An unexpected error has occurred",
+				Code:    0,
+			},
+		},
+	}
+
+	destinations := []string{}
+
+	nodes, err := s.repo.ListAllNodes()
+	if len(nodes) == 0 {
+		srv.Send(&protoManager.GetMapResponse{
+			Result: &protoManager.GetMapResponse_Error_{
+				Error: &protoManager.GetMapResponse_Error{
+					Message: "There are no agent nodes in monitoring. Unable to build network map",
+					Code:    1,
+				},
+			},
+		})
+		return nil
+	}
+
+	for _, node := range nodes {
+		if node.Domain != "" {
+			destinations = append(destinations, node.Domain)
+		} else {
+			destinations = append(destinations, node.Ip)
+		}
+	}
+	if err != nil {
+		s.logger.WhithErrorFields(err).Error("Failed to get a list of all monitored nodes from the database ")
+		srv.Send(internalError)
+		return nil
+	}
+
+	hops := make(chan traceroute.Hop, 15)
+	result := make(chan models.TraceResult)
+	t := traceroute.NewTracer(s.cfg)
+
+	go func() {
+		defer close(hops)
+		for i, domain := range destinations {
+			if i == 1 {
+				srv.Send(&protoManager.GetMapResponse{
+					Result: &protoManager.GetMapResponse_Error_{
+						Error: &protoManager.GetMapResponse_Error{
+							Message: "SYKA",
+							Code:    0,
+						},
+					},
+				})
+				return
+			}
+
+			err := t.Traceroute(i, domain, hops, result)
+			if err != nil {
+				s.logger.WithError(err).Errorf("Failed to build trace to node %v", domain)
+				srv.Send(internalError)
+				return
+			}
+		}
+	}()
+
+	// В данной горутине мы читаем данные из канала result.
+	// В канал приходит информация о том удалось ли построить трассировку до конкретной ноды
+	//
+	//	- Если трассировку до ноды построить не удалось, то мы увеличиваем на 1 значение поля
+	// unreachable для нужной нам ноды в базе данных
+	//
+	//	- Если нам удалось построить трассировку, то мы обнуляем значение поля unreachable
+	// для нужной нам ноды в базе данных
+	go func() {
+		for res := range result {
+
+			node, err := s.repo.Nodes.GetNodeByIP(string(res.Addr))
+			if err != nil {
+				s.logger.WithError(err).Errorf("Failed to get node with ip %v from database", res.Addr)
+				srv.Send(internalError)
+				return
+			}
+
+			cnt, err := s.repo.Nodes.GetNodeUnreachableCounter(node.Id)
+			if err != nil {
+				s.logger.WithError(err).Errorf("Failed to get the value of the Unreachable field from the database for the node with id %v", node.Id)
+				srv.Send(internalError)
+				return
+			}
+
+			if res.Unreachable {
+				_, err := s.repo.Nodes.UpdateNodeUnreachableCounter(node.Id, cnt+1)
+				if err != nil {
+					s.logger.WithError(err).Errorf("Failed to change the value of the Unreachable field in the database for the node with id %v", node.Id)
+					srv.Send(internalError)
+					return
+				}
+			} else {
+				_, err := s.repo.Nodes.UpdateNodeUnreachableCounter(node.Id, 0)
+				if err != nil {
+					s.logger.WithError(err).Errorf("Failed to change the value of the Unreachable field in the database for the node with id %v", node.Id)
+					srv.Send(internalError)
+					return
+				}
+			}
+		}
+	}()
+
+	for hop := range hops {
+		srv.Send(&protoManager.GetMapResponse{
+			Result: &protoManager.GetMapResponse_Success_{
+				Success: &protoManager.GetMapResponse_Success{
+					Hop: &protoManager.Hop{
+						Id:          int64(hop.Id),
+						Destination: hop.Destination,
+						Success:     hop.Success,
+						Address:     hop.AddressString(),
+						Host:        hop.Host,
+						ElapsedTime: int64(hop.ElapsedTime),
+						Ttl:         int64(hop.TTL),
+					},
+				},
+			},
+		})
+	}
+	return nil
 }
