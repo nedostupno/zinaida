@@ -24,6 +24,11 @@ message RegistrateRequest {
 
 service manager {
     rpc Registrate (RegistrateRequest) returns (RegistrateResponse);
+    rpc GetNodes (GetNodesRequest) returns (GetNodesResponse){
+        option (google.api.http) = {
+            get: "/api/nodes"
+        };
+    };
     rpc GetNode (GetNodeRequest) returns (GetNodeResponse){
         option (google.api.http) = {
             get: "/api/nodes/{id}"
@@ -53,6 +58,32 @@ service manager {
         };
     }
 }
+
+message GetNodesRequest {
+    
+}
+
+message GetNodesResponse{
+
+    oneof result {
+        ListNodes listNodes = 1;
+        Error error = 2;
+    }
+    message ListNodes {
+        repeated NodeAgent nodeAgent = 1;
+    }    
+    message Error {
+        string message = 1;
+        Code code = 2;
+        
+        enum Code {
+            INTERNAL_ERROR = 0;
+        }
+    }
+}
+
+
+
 
 message GetNodeRequest{
     int64 id = 1;

@@ -726,3 +726,62 @@ func (s *Server) DeleteNode(ctx context.Context, r *protoManager.DeleteNodeReque
 	grpc.SendHeader(ctx, md)
 	return resp, nil
 }
+
+func (s *Server) GetNodes(ctx context.Context, r *protoManager.GetNodesRequest) (*protoManager.GetNodesResponse, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		s.logger.WhithErrorFields(fmt.Errorf("failed to get metadata from incomming context")).Error()
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		resp := &protoManager.GetNodesResponse{
+			Result: &protoManager.GetNodesResponse_Error_{
+				Error: &protoManager.GetNodesResponse_Error{
+					Message: "An unexpected error has occurred",
+					Code:    0,
+				},
+			},
+		}
+
+		return resp, nil
+	}
+
+	nodes, err := s.repo.ListAllNodes()
+	if err != nil {
+		s.logger.WhithErrorFields(err).Error("Failed to get a list of all monitored nodes from the database ")
+		resp := &protoManager.GetNodesResponse{
+			Result: &protoManager.GetNodesResponse_Error_{
+				Error: &protoManager.GetNodesResponse_Error{
+					Message: "An unexpected error has occurred",
+					Code:    0,
+				},
+			},
+		}
+
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return resp, nil
+	}
+
+	node := []*protoManager.NodeAgent{}
+
+	for _, v := range nodes {
+		node = append(node, &protoManager.NodeAgent{
+
+			Domain: v.Domain,
+			Id:     int64(v.Id),
+			Ip:     v.Ip,
+		})
+	}
+
+	resp := &protoManager.GetNodesResponse{
+		Result: &protoManager.GetNodesResponse_ListNodes_{
+			ListNodes: &protoManager.GetNodesResponse_ListNodes{
+				NodeAgent: node,
+			},
+		},
+	}
+
+	md.Append("x-http-code", "200")
+	grpc.SendHeader(ctx, md)
+	return resp, nil
+}
