@@ -2,10 +2,9 @@ syntax = "proto3";
 
 package protoManager;
 
-option go_package = "./protoManager";
+option go_package = "github.com/nedostupno/zinaida/proto/protoManager";
 
 import "google/api/annotations.proto";
-
 
 message NodeAgent {
     int64 id = 1;
@@ -189,6 +188,8 @@ message RebootNodeResponse {
         }
     }
 }
+
+
 
 message LoginRequest {
     string username = 1;
