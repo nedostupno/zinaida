@@ -57,8 +57,8 @@ func (s *Server) JwtAuthenticationInterceptor(ctx context.Context, req interface
 	})
 
 	if err != nil || !token.Valid {
-		r := status.New(codes.Unauthenticated, "Invalid authentication token")
-		return nil, r.Err()
+
+		return nil, status.Error(codes.Unauthenticated, "Invalid authentication token")
 	}
 
 	return handler(ctx, req)
@@ -161,4 +161,38 @@ func (s Server) httpResponseModifier(ctx context.Context, w http.ResponseWriter,
 	}
 
 	return nil
+}
+
+func (s *Server) StreamServerJWTInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	ctx := ss.Context()
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		s.logger.WhithErrorFields(fmt.Errorf("failed to get metadata from incomming context")).Error()
+		return status.Error(codes.Internal, "An unexpected error has occurred")
+	}
+
+	authHeader := md.Get("authorization")
+	if len(authHeader) == 0 {
+		return status.Error(codes.Unauthenticated, "Missed auth token")
+	}
+	splittedHeader := strings.Split(authHeader[0], " ")
+	if len(splittedHeader) != 2 || splittedHeader[0] != "Bearer" {
+		return status.Error(codes.Unauthenticated, "Invalid header auth")
+	}
+
+	tokenFromHeader := splittedHeader[1]
+
+	token, err := jwt.ParseWithClaims(tokenFromHeader, &auth.CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(s.cfg.Jwt.SecretKeyForAccessToken), nil
+	})
+
+	if err != nil || !token.Valid {
+
+		return status.Error(codes.Unauthenticated, "Invalid authentication token")
+	}
+
+	return handler(srv, ss)
 }

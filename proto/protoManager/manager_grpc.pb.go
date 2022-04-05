@@ -29,6 +29,7 @@ type ManagerClient interface {
 	DeleteNode(ctx context.Context, in *DeleteNodeRequest, opts ...grpc.CallOption) (*DeleteNodeResponse, error)
 	RebootNode(ctx context.Context, in *RebootNodeRequest, opts ...grpc.CallOption) (*RebootNodeResponse, error)
 	GetNodeStat(ctx context.Context, in *GetNodeStatRequest, opts ...grpc.CallOption) (*GetNodeStatResponse, error)
+	GetMap(ctx context.Context, in *GetMapRequest, opts ...grpc.CallOption) (Manager_GetMapClient, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	Refresh(ctx context.Context, in *RefreshRequest, opts ...grpc.CallOption) (*RefreshResponse, error)
 }
@@ -104,6 +105,38 @@ func (c *managerClient) GetNodeStat(ctx context.Context, in *GetNodeStatRequest,
 	return out, nil
 }
 
+func (c *managerClient) GetMap(ctx context.Context, in *GetMapRequest, opts ...grpc.CallOption) (Manager_GetMapClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Manager_ServiceDesc.Streams[0], "/protoManager.manager/GetMap", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &managerGetMapClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Manager_GetMapClient interface {
+	Recv() (*GetMapResponse, error)
+	grpc.ClientStream
+}
+
+type managerGetMapClient struct {
+	grpc.ClientStream
+}
+
+func (x *managerGetMapClient) Recv() (*GetMapResponse, error) {
+	m := new(GetMapResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 func (c *managerClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
 	out := new(LoginResponse)
 	err := c.cc.Invoke(ctx, "/protoManager.manager/Login", in, out, opts...)
@@ -133,6 +166,7 @@ type ManagerServer interface {
 	DeleteNode(context.Context, *DeleteNodeRequest) (*DeleteNodeResponse, error)
 	RebootNode(context.Context, *RebootNodeRequest) (*RebootNodeResponse, error)
 	GetNodeStat(context.Context, *GetNodeStatRequest) (*GetNodeStatResponse, error)
+	GetMap(*GetMapRequest, Manager_GetMapServer) error
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	Refresh(context.Context, *RefreshRequest) (*RefreshResponse, error)
 	mustEmbedUnimplementedManagerServer()
@@ -162,6 +196,9 @@ func (UnimplementedManagerServer) RebootNode(context.Context, *RebootNodeRequest
 }
 func (UnimplementedManagerServer) GetNodeStat(context.Context, *GetNodeStatRequest) (*GetNodeStatResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNodeStat not implemented")
+}
+func (UnimplementedManagerServer) GetMap(*GetMapRequest, Manager_GetMapServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetMap not implemented")
 }
 func (UnimplementedManagerServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
@@ -308,6 +345,27 @@ func _Manager_GetNodeStat_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Manager_GetMap_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetMapRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ManagerServer).GetMap(m, &managerGetMapServer{stream})
+}
+
+type Manager_GetMapServer interface {
+	Send(*GetMapResponse) error
+	grpc.ServerStream
+}
+
+type managerGetMapServer struct {
+	grpc.ServerStream
+}
+
+func (x *managerGetMapServer) Send(m *GetMapResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 func _Manager_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LoginRequest)
 	if err := dec(in); err != nil {
@@ -388,6 +446,12 @@ var Manager_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Manager_Refresh_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetMap",
+			Handler:       _Manager_GetMap_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "protoManager/manager.proto",
 }

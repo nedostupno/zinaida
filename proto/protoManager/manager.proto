@@ -55,6 +55,11 @@ service manager {
             get: "/api/nodes/{id}/stat"
         };
     };
+    rpc GetMap (GetMapRequest) returns (stream GetMapResponse){
+        option (google.api.http) = {
+            get: "/api/map"
+        };
+    };
     rpc Login (LoginRequest) returns (LoginResponse) {
         option (google.api.http) = {
             post: "/api/login"
@@ -221,6 +226,41 @@ message GetNodeStatResponse {
             NODE_IS_UNREACHABLE = 2;
         }
     }
+}
+
+message GetMapRequest {
+    
+}
+
+message GetMapResponse {
+    oneof result {
+        Success success = 1;
+        Error error = 2;
+    }
+    
+    message Success {
+        Hop Hop = 2;
+    }
+    
+    message Error {
+        string message = 1;
+        Code code = 2;
+        
+        enum Code {
+            INTERNAL_ERROR = 0;
+            NO_NODES_IN_MONITORING = 1;
+        }
+    }
+}
+
+message Hop {
+    int64 id = 1;
+    string destination = 2;
+    bool success = 3;
+    string address = 4;
+    string host = 5;
+    int64 elapsedTime = 6;
+    int64 ttl = 7;
 }
 
 message LoginRequest {
