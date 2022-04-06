@@ -587,7 +587,7 @@ func (a *api) Refresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if refresh.Token == "" {
-		JsonError(w, "Missed refresh token", http.StatusUnauthorized)
+		JsonError(w, "Missed refresh token", http.StatusBadRequest)
 		return
 	}
 
@@ -602,7 +602,7 @@ func (a *api) Refresh(w http.ResponseWriter, r *http.Request) {
 
 	// Ошибка будет выброшена даже в том случае, если токен истек, так что ручные проверки не требуются
 	if err != nil || !token.Valid {
-		JsonError(w, "invalid refresh token", http.StatusUnauthorized)
+		JsonError(w, "invalid refresh token", http.StatusBadRequest)
 		return
 	}
 
@@ -614,7 +614,7 @@ func (a *api) Refresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !exist {
-		JsonError(w, "invalid refresh token", http.StatusUnauthorized)
+		JsonError(w, "invalid refresh token", http.StatusBadRequest)
 		return
 	}
 
@@ -626,7 +626,7 @@ func (a *api) Refresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if refresh.Token != oldRefreshToken {
-		JsonError(w, "invalid refrsh token", http.StatusUnauthorized)
+		JsonError(w, "invalid refrsh token", http.StatusBadRequest)
 		return
 	}
 
