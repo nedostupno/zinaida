@@ -13,7 +13,7 @@ type ManagerConfig struct {
 	Trace struct {
 		Port        int `yaml:"port" env-default:"5432"`
 		Max_hops    int `yaml:"max_hops" env-default:"15"`
-		Timeout_ms  int `yaml:"timeout_ms" env-default:"500"`
+		Timeout     int `yaml:"timeout" env-default:"500"`
 		Retries     int `yaml:"retries" env-default:"3"`
 		Packet_size int `yaml:"packet_size" env-default:"52"`
 	} `yaml:"trace"`
