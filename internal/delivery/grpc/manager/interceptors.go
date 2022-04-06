@@ -23,7 +23,7 @@ import (
 
 func (s *Server) JwtAuthenticationInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	// Определяем эндпоинты, которые не требуют аутентификации
-	notAuth := []string{"/protoManager.manager/Login", "/protoManager.manager/Refresh"}
+	notAuth := []string{"/protoManager.manager/Login", "/protoManager.manager/Refresh", "/protoManager.manager/Registrate"}
 	requestPath := info.FullMethod
 
 	for _, v := range notAuth {
