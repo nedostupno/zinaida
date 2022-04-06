@@ -8,7 +8,7 @@ import "google/api/annotations.proto";
 import "protoAgent/agent.proto";
 
 message NodeAgent {
-    int64 id = 1;
+    string id = 1;
     string ip = 2;
     string domain = 3;
 }
