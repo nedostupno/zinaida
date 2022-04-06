@@ -102,7 +102,7 @@ message GetNodesResponse{
 
 
 message GetNodeRequest{
-    int64 id = 1;
+    string id = 1;
 }
 
 message GetNodeResponse{
