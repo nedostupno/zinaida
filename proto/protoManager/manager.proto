@@ -208,7 +208,7 @@ message RebootNodeResponse {
 }
 
 message GetNodeStatRequest {
-    int64 id = 1; 
+    string id = 1; 
 }
 
 message GetNodeStatResponse {
