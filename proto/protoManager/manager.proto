@@ -162,7 +162,7 @@ message DeleteNodeRequest {
 
 message DeleteNodeResponse {
     oneof result {
-        Success success = 1;
+        string success = 1;
         Error error = 2;
     }
     

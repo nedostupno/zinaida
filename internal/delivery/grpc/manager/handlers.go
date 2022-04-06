@@ -702,7 +702,7 @@ func (s *Server) DeleteNode(ctx context.Context, r *protoManager.DeleteNodeReque
 		resp := &protoManager.DeleteNodeResponse{
 			Result: &protoManager.DeleteNodeResponse_Error_{
 				Error: &protoManager.DeleteNodeResponse_Error{
-					Message: fmt.Sprintf("Agent nodes with id %d were not found in monitoring", r.Id),
+					Message: fmt.Sprintf("Agent node with id %d were not found in monitoring", r.Id),
 					Code:    1,
 				},
 			},
@@ -722,7 +722,7 @@ func (s *Server) DeleteNode(ctx context.Context, r *protoManager.DeleteNodeReque
 
 	resp := &protoManager.DeleteNodeResponse{
 		Result: &protoManager.DeleteNodeResponse_Success_{
-			Success: &protoManager.DeleteNodeResponse_Success{},
+			Success: fmt.Sprintf("Agent node with id %d successfully removed from monitoring", r.Id),
 		},
 	}
 
