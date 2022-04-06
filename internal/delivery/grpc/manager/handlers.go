@@ -67,7 +67,7 @@ func (s *Server) Registrate(ctx context.Context, r *protoManager.RegistrateReque
 
 	resp := &protoManager.RegistrateResponse{
 		NodeAgent: &protoManager.NodeAgent{
-			Id:     int64(node.Id),
+			Id:     fmt.Sprint(node.Id),
 			Ip:     node.Ip,
 			Domain: node.Domain,
 		},
@@ -192,7 +192,7 @@ func (s *Server) GetNode(ctx context.Context, r *protoManager.GetNodeRequest) (*
 			Success: &protoManager.GetNodeResponse_Success{
 				Message: "Information about the node-agent was successfully received",
 				Node: &protoManager.NodeAgent{
-					Id:     int64(node.Id),
+					Id:     fmt.Sprint(node.Id),
 					Ip:     node.Ip,
 					Domain: node.Domain,
 				},
@@ -660,7 +660,7 @@ func (s *Server) CreateNode(ctx context.Context, r *protoManager.CreateNodeReque
 			Success: &protoManager.CreateNodeResponse_Success{
 				Message: "Agent node successfully registered",
 				Node: &protoManager.NodeAgent{
-					Id:     int64(node.Id),
+					Id:     fmt.Sprint(node.Id),
 					Ip:     node.Ip,
 					Domain: node.Domain,
 				},
@@ -772,7 +772,7 @@ func (s *Server) GetNodes(ctx context.Context, r *protoManager.GetNodesRequest) 
 		nodeList = append(nodeList, &protoManager.NodeAgent{
 
 			Domain: v.Domain,
-			Id:     int64(v.Id),
+			Id:     fmt.Sprint(v.Id),
 			Ip:     v.Ip,
 		})
 	}
@@ -865,7 +865,7 @@ func (s *Server) RebootNode(ctx context.Context, r *protoManager.RebootNodeReque
 			Success: &protoManager.RebootNodeResponse_Success{
 				Message: fmt.Sprintf("Agent node with id %d will be restarted in 1 minute", node.Id),
 				Node: &protoManager.NodeAgent{
-					Id:     int64(node.Id),
+					Id:     fmt.Sprint(node.Id),
 					Ip:     node.Ip,
 					Domain: node.Domain,
 				},
@@ -952,7 +952,7 @@ func (s *Server) GetNodeStat(ctx context.Context, r *protoManager.GetNodeStatReq
 			Success: &protoManager.GetNodeStatResponse_Success{
 				Message: fmt.Sprintf("Statistics successfuly collected from agent node with id %d", node.Id),
 				Node: &protoManager.NodeAgent{
-					Id:     int64(node.Id),
+					Id:     fmt.Sprint(node.Id),
 					Ip:     node.Ip,
 					Domain: node.Domain,
 				},
