@@ -706,19 +706,12 @@ func (s *Server) DeleteNode(ctx context.Context, r *protoManager.DeleteNodeReque
 		return internalError, nil
 	}
 
-	isExist, err := s.repo.Nodes.CheckNodeExistenceByID(int(r.Id))
+	id, err := strconv.Atoi(r.Id)
 	if err != nil {
-		s.logger.WhithErrorFields(err).Errorf("failed to check if node with id %s exists in the database ", r.Id)
-		md.Append("x-http-code", "500")
-		grpc.SendHeader(ctx, md)
-		return internalError, nil
-	}
-
-	if !isExist {
 		resp := &protoManager.DeleteNodeResponse{
 			Result: &protoManager.DeleteNodeResponse_Error_{
 				Error: &protoManager.DeleteNodeResponse_Error{
-					Message: fmt.Sprintf("Agent node with id %d were not found in monitoring", r.Id),
+					Message: fmt.Sprintf("Agent node with id %s were not found in monitoring. id must contain only numbers", r.Id),
 					Code:    1,
 				},
 			},
@@ -728,9 +721,31 @@ func (s *Server) DeleteNode(ctx context.Context, r *protoManager.DeleteNodeReque
 		return resp, nil
 	}
 
-	_, err = s.repo.DeleteNode(int(r.Id))
+	isExist, err := s.repo.Nodes.CheckNodeExistenceByID(id)
 	if err != nil {
-		s.logger.WhithErrorFields(err).Errorf("failed to remove node with id %s from the database", r.Id)
+		s.logger.WhithErrorFields(err).Errorf("failed to check if node with id %d exists in the database ", id)
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
+	if !isExist {
+		resp := &protoManager.DeleteNodeResponse{
+			Result: &protoManager.DeleteNodeResponse_Error_{
+				Error: &protoManager.DeleteNodeResponse_Error{
+					Message: fmt.Sprintf("Agent node with id %d were not found in monitoring", id),
+					Code:    1,
+				},
+			},
+		}
+		md.Append("x-http-code", "404")
+		grpc.SendHeader(ctx, md)
+		return resp, nil
+	}
+
+	_, err = s.repo.DeleteNode(id)
+	if err != nil {
+		s.logger.WhithErrorFields(err).Errorf("failed to remove node with id %d from the database", id)
 		md.Append("x-http-code", "500")
 		grpc.SendHeader(ctx, md)
 		return internalError, nil
@@ -738,7 +753,7 @@ func (s *Server) DeleteNode(ctx context.Context, r *protoManager.DeleteNodeReque
 
 	resp := &protoManager.DeleteNodeResponse{
 		Result: &protoManager.DeleteNodeResponse_Success_{
-			Success: fmt.Sprintf("Agent node with id %d successfully removed from monitoring", r.Id),
+			Success: fmt.Sprintf("Agent node with id %d successfully removed from monitoring", id),
 		},
 	}
 
