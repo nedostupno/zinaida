@@ -202,7 +202,6 @@ func (s *Server) GetNode(ctx context.Context, r *protoManager.GetNodeRequest) (*
 
 	md.Append("x-http-code", "200")
 	grpc.SendHeader(ctx, md)
-
 	return resp, nil
 }
 
@@ -282,9 +281,6 @@ func (s *Server) Login(ctx context.Context, r *protoManager.LoginRequest) (*prot
 			return internalError, nil
 		}
 
-		md.Append("x-http-code", "200")
-		grpc.SendHeader(ctx, md)
-
 		resp := &protoManager.LoginResponse{
 			Result: &protoManager.LoginResponse_Jwt{
 				Jwt: &protoManager.JWT{
@@ -293,6 +289,8 @@ func (s *Server) Login(ctx context.Context, r *protoManager.LoginRequest) (*prot
 				},
 			},
 		}
+		md.Append("x-http-code", "200")
+		grpc.SendHeader(ctx, md)
 		return resp, nil
 	}
 
@@ -410,8 +408,6 @@ func (s *Server) Refresh(ctx context.Context, r *protoManager.RefreshRequest) (*
 		return internalError, nil
 	}
 
-	md.Append("x-http-code", "200")
-	grpc.SendHeader(ctx, md)
 	resp := &protoManager.RefreshResponse{
 		Result: &protoManager.RefreshResponse_Jwt{
 			Jwt: &protoManager.JWT{
@@ -420,6 +416,8 @@ func (s *Server) Refresh(ctx context.Context, r *protoManager.RefreshRequest) (*
 			},
 		},
 	}
+	md.Append("x-http-code", "200")
+	grpc.SendHeader(ctx, md)
 	return resp, nil
 }
 
@@ -546,7 +544,7 @@ func (s *Server) CreateNode(ctx context.Context, r *protoManager.CreateNodeReque
 						},
 					},
 				}
-				md.Append("x-http-code", "200")
+				md.Append("x-http-code", "400")
 				grpc.SendHeader(ctx, md)
 				return resp, nil
 			}
@@ -607,7 +605,7 @@ func (s *Server) CreateNode(ctx context.Context, r *protoManager.CreateNodeReque
 				},
 			},
 		}
-		md.Append("x-http-code", "200")
+		md.Append("x-http-code", "400")
 		grpc.SendHeader(ctx, md)
 		return resp, nil
 	}
@@ -636,7 +634,7 @@ func (s *Server) CreateNode(ctx context.Context, r *protoManager.CreateNodeReque
 				},
 			},
 		}
-		md.Append("x-http-code", "200")
+		md.Append("x-http-code", "400")
 		grpc.SendHeader(ctx, md)
 		return resp, nil
 	}
@@ -850,7 +848,7 @@ func (s *Server) RebootNode(ctx context.Context, r *protoManager.RebootNodeReque
 				},
 			},
 		}
-		md.Append("x-http-code", "200")
+		md.Append("x-http-code", "400")
 		grpc.SendHeader(ctx, md)
 		return resp, nil
 	}
@@ -936,7 +934,7 @@ func (s *Server) GetNodeStat(ctx context.Context, r *protoManager.GetNodeStatReq
 				},
 			},
 		}
-		md.Append("x-http-code", "200")
+		md.Append("x-http-code", "400")
 		grpc.SendHeader(ctx, md)
 		return resp, nil
 	}
@@ -1012,18 +1010,6 @@ func (s *Server) GetMap(r *protoManager.GetMapRequest, srv protoManager.Manager_
 	go func() {
 		defer close(hops)
 		for i, domain := range destinations {
-			if i == 1 {
-				srv.Send(&protoManager.GetMapResponse{
-					Result: &protoManager.GetMapResponse_Error_{
-						Error: &protoManager.GetMapResponse_Error{
-							Message: "SYKA",
-							Code:    0,
-						},
-					},
-				})
-				return
-			}
-
 			err := t.Traceroute(i, domain, hops, result)
 			if err != nil {
 				s.logger.WithError(err).Errorf("Failed to build trace to node %v", domain)
