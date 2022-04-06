@@ -432,7 +432,7 @@ func (a *api) GetStat(w http.ResponseWriter, r *http.Request) {
 			"node":    node,
 			"stat":    nil,
 		}
-		Respond(w, msg, http.StatusOK)
+		Respond(w, msg, http.StatusBadRequest)
 		return
 	}
 
@@ -487,7 +487,7 @@ func (a *api) RebootNode(w http.ResponseWriter, r *http.Request) {
 			"node":    node,
 			"stat":    nil,
 		}
-		Respond(w, msg, http.StatusOK)
+		Respond(w, msg, http.StatusBadRequest)
 		return
 	}
 
