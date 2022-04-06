@@ -597,7 +597,7 @@ func (s *Server) CreateNode(ctx context.Context, r *protoManager.CreateNodeReque
 		}
 	}
 
-	_, err := s.Ping(n.Ip, s.cfg.Grpc.AgentsPort, s.cfg.Grpc.PingTimeout)
+	_, err := s.Ping(n.Ip, s.cfg.Grpc.AgentsPort)
 	if err != nil {
 		resp := &protoManager.CreateNodeResponse{
 			Result: &protoManager.CreateNodeResponse_Error_{
@@ -840,7 +840,7 @@ func (s *Server) RebootNode(ctx context.Context, r *protoManager.RebootNodeReque
 		grpc.SendHeader(ctx, md)
 		return internalError, nil
 	}
-	_, err = s.Ping(node.Ip, s.cfg.Grpc.AgentsPort, s.cfg.Grpc.PingTimeout)
+	_, err = s.Ping(node.Ip, s.cfg.Grpc.AgentsPort)
 	if err != nil {
 		resp := &protoManager.RebootNodeResponse{
 			Result: &protoManager.RebootNodeResponse_Error_{
@@ -926,7 +926,7 @@ func (s *Server) GetNodeStat(ctx context.Context, r *protoManager.GetNodeStatReq
 		grpc.SendHeader(ctx, md)
 		return internalError, nil
 	}
-	_, err = s.Ping(node.Ip, s.cfg.Grpc.AgentsPort, s.cfg.Grpc.PingTimeout)
+	_, err = s.Ping(node.Ip, s.cfg.Grpc.AgentsPort)
 	if err != nil {
 		resp := &protoManager.GetNodeStatResponse{
 			Result: &protoManager.GetNodeStatResponse_Error_{
