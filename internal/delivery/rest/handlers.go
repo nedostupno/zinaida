@@ -253,16 +253,16 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
+			if r := net.ParseIP(n.Ip); r == nil {
+				JsonError(w, "Specified ip address is not valid ", http.StatusBadRequest)
+				return
+			}
+
 			if !ok && n.Ip != "" {
 				JsonError(w, "Specified ip address and ip address from domain resource records are different", http.StatusBadRequest)
 				return
 			}
 		}
-	}
-
-	if r := net.ParseIP(n.Ip); r == nil {
-		JsonError(w, "Specified ip address is not valid ", http.StatusBadRequest)
-		return
 	}
 
 	_, err := a.grpc.Ping(n.Ip, a.cfg.Grpc.AgentsPort, a.cfg.Grpc.PingTimeout)
