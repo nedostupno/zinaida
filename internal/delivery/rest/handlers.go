@@ -234,7 +234,7 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 		resolvedIPs, err := net.LookupHost(n.Domain)
 		if err != nil {
 			if r, ok := err.(*net.DNSError); ok && r.IsNotFound {
-				JsonError(w, fmt.Sprintf("Failed to get domain information %s", n.Domain), http.StatusOK)
+				JsonError(w, fmt.Sprintf("Failed to get domain information %s", n.Domain), http.StatusBadRequest)
 				return
 			}
 			a.logger.WithRestApiErrorFields(r, err).Errorf("Unable to find ip for domain: %s", n.Domain)
@@ -272,7 +272,7 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 			"message": "Failed to connect to agent node",
 			"node":    n,
 		}
-		Respond(w, msg, http.StatusOK)
+		Respond(w, msg, http.StatusBadRequest)
 		return
 	}
 
