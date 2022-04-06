@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"strconv"
 	"time"
 	"unicode/utf8"
 
@@ -152,7 +153,22 @@ func (s *Server) GetNode(ctx context.Context, r *protoManager.GetNodeRequest) (*
 		return internalError, nil
 	}
 
-	id := int(r.GetId())
+	id, err := strconv.Atoi(r.Id)
+	if err != nil {
+		md.Append("x-http-code", "404")
+		grpc.SendHeader(ctx, md)
+
+		resp := &protoManager.GetNodeResponse{
+			Result: &protoManager.GetNodeResponse_Error_{
+				Error: &protoManager.GetNodeResponse_Error{
+					Message: fmt.Sprintf("node with id %d does not exist. Id must contain only numbers", id),
+					Code:    1,
+				},
+			},
+		}
+
+		return resp, nil
+	}
 
 	isExist, err := s.repo.Nodes.CheckNodeExistenceByID(id)
 	if err != nil {
