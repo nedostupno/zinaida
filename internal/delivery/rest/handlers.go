@@ -66,7 +66,7 @@ func (a *api) GetMap(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if err != nil {
-		a.logger.WithRestApiErrorFields(r, err).Error("Failed to get a list of all monitored nodes from the database ")
+		a.logger.WithRestApiErrorFields(r, err).Error("Failed to get a list of all monitored nodes from the database")
 		JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
 		return
 	}
@@ -88,7 +88,7 @@ func (a *api) GetMap(w http.ResponseWriter, r *http.Request) {
 		for i, domain := range destinations {
 			err := t.Traceroute(i, domain, hops, result)
 			if err != nil {
-				a.logger.WithRestApiErrorFields(r, err).Errorf("Failed to build trace to node %v", domain)
+				a.logger.WithRestApiErrorFields(r, err).Errorf("Failed to build trace to node %s", domain)
 				JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
 				return
 			}
@@ -108,14 +108,14 @@ func (a *api) GetMap(w http.ResponseWriter, r *http.Request) {
 
 			node, err := a.repo.Nodes.GetNodeByIP(string(res.Addr))
 			if err != nil {
-				a.logger.WithRestApiErrorFields(r, err).Errorf("Failed to get node with ip %v from database", res.Addr)
+				a.logger.WithRestApiErrorFields(r, err).Errorf("Failed to get node with ip %s from database", res.Addr)
 				JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
 				return
 			}
 
 			cnt, err := a.repo.Nodes.GetNodeUnreachableCounter(node.Id)
 			if err != nil {
-				a.logger.WithRestApiErrorFields(r, err).Errorf("Failed to get the value of the Unreachable field from the database for the node with id %v", node.Id)
+				a.logger.WithRestApiErrorFields(r, err).Errorf("Failed to get the value of the Unreachable field from the database for the node with id %d", node.Id)
 				JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
 				return
 			}
@@ -123,14 +123,14 @@ func (a *api) GetMap(w http.ResponseWriter, r *http.Request) {
 			if res.Unreachable {
 				_, err := a.repo.Nodes.UpdateNodeUnreachableCounter(node.Id, cnt+1)
 				if err != nil {
-					a.logger.WithRestApiErrorFields(r, err).Errorf("Failed to change the value of the Unreachable field in the database for the node with id %v", node.Id)
+					a.logger.WithRestApiErrorFields(r, err).Errorf("Failed to change the value of the Unreachable field in the database for the node with id %d", node.Id)
 					JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
 					return
 				}
 			} else {
 				_, err := a.repo.Nodes.UpdateNodeUnreachableCounter(node.Id, 0)
 				if err != nil {
-					a.logger.WithRestApiErrorFields(r, err).Errorf("Failed to change the value of the Unreachable field in the database for the node with id %v", node.Id)
+					a.logger.WithRestApiErrorFields(r, err).Errorf("Failed to change the value of the Unreachable field in the database for the node with id %d", node.Id)
 					JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
 					return
 				}
@@ -150,7 +150,7 @@ func (a *api) GetMap(w http.ResponseWriter, r *http.Request) {
 func (a *api) GetNodes(w http.ResponseWriter, r *http.Request) {
 	nodes, err := a.repo.ListAllNodes()
 	if err != nil {
-		a.logger.WithRestApiErrorFields(r, err).Error("Failed to get a list of all monitored nodes from the database ")
+		a.logger.WithRestApiErrorFields(r, err).Error("Failed to get a list of all monitored nodes from the database")
 		JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
 		return
 	}
@@ -215,7 +215,7 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 	if n.Domain != "" {
 		reg, err := regexp.Compile(`^([A-Za-zА-Яа-я0-9-]{1,63}\.)+[A-Za-zА-Яа-я0-9]{2,6}$`)
 		if err != nil {
-			a.logger.WithRestApiErrorFields(r, err).Error("failed to compile pattern for regular expression ")
+			a.logger.WithRestApiErrorFields(r, err).Error("failed to compile pattern for regular expression")
 			JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
 			return
 		}
@@ -292,7 +292,7 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 	if (isExistByDomain && n.Domain != "") || isExistByIP {
 		existNode, err := a.repo.GetNodeByIP(n.Ip)
 		if err != nil {
-			a.logger.WithRestApiErrorFields(r, err).Errorf("failed to get node with ip %s from database ", n.Ip)
+			a.logger.WithRestApiErrorFields(r, err).Errorf("failed to get node with ip %s from database", n.Ip)
 			JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
 			return
 		}
@@ -315,7 +315,7 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 
 	node, err := a.repo.GetNodeByIP(n.Ip)
 	if err != nil {
-		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to get node with ip %s from database ", n.Ip)
+		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to get node with ip %s from database", n.Ip)
 		JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
 		return
 	}
@@ -338,7 +338,7 @@ func (a *api) GetNodeInfo(w http.ResponseWriter, r *http.Request) {
 
 	isExist, err := a.repo.Nodes.CheckNodeExistenceByID(id)
 	if err != nil {
-		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to check if node with id %s exists in the database", id)
+		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to check if node with id %d exists in the database", id)
 		JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
 		return
 	}
@@ -350,7 +350,7 @@ func (a *api) GetNodeInfo(w http.ResponseWriter, r *http.Request) {
 
 	node, err := a.repo.GetNodeByID(id)
 	if err != nil {
-		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to get node with id %s from database", id)
+		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to get node with id %d from database", id)
 		JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
 		return
 	}
@@ -373,7 +373,7 @@ func (a *api) DeleteNode(w http.ResponseWriter, r *http.Request) {
 
 	isExist, err := a.repo.Nodes.CheckNodeExistenceByID(id)
 	if err != nil {
-		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось проверить наличие ноды с id %s в базе данных", id)
+		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to check if node with id %d exists in the database", id)
 		JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
 		return
 	}
@@ -385,7 +385,7 @@ func (a *api) DeleteNode(w http.ResponseWriter, r *http.Request) {
 
 	_, err = a.repo.DeleteNode(id)
 	if err != nil {
-		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to remove node with id %s from the database", id)
+		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to remove node with id %d from the database", id)
 		JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
 		return
 	}
@@ -407,7 +407,7 @@ func (a *api) GetStat(w http.ResponseWriter, r *http.Request) {
 
 	isExist, err := a.repo.Nodes.CheckNodeExistenceByID(id)
 	if err != nil {
-		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to check if node with id %s exists in the database ", id)
+		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to check if node with id %d exists in the database ", id)
 		JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
 		return
 	}
@@ -419,7 +419,7 @@ func (a *api) GetStat(w http.ResponseWriter, r *http.Request) {
 
 	node, err := a.repo.GetNodeByID(id)
 	if err != nil {
-		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to get node with id %s from database ", id)
+		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to get node with id %d from database ", id)
 		JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
 		return
 	}
@@ -462,7 +462,7 @@ func (a *api) RebootNode(w http.ResponseWriter, r *http.Request) {
 
 	isExist, err := a.repo.Nodes.CheckNodeExistenceByID(id)
 	if err != nil {
-		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to check if node with id %s exists in the database", id)
+		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to check if node with id %d exists in the database", id)
 		JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
 		return
 	}
@@ -474,7 +474,7 @@ func (a *api) RebootNode(w http.ResponseWriter, r *http.Request) {
 
 	node, err := a.repo.GetNodeByID(id)
 	if err != nil {
-		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to get node with id %s from database", id)
+		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to get node with id %d from database", id)
 		JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
 		return
 	}
@@ -483,7 +483,7 @@ func (a *api) RebootNode(w http.ResponseWriter, r *http.Request) {
 
 		msg := map[string]interface{}{
 			"success": false,
-			"message": fmt.Sprintf("Failed to connect to agent node with id %d", node.Id),
+			"message": fmt.Sprintf("Failed to connect to agent node with id %d", id),
 			"node":    node,
 			"stat":    nil,
 		}
@@ -493,10 +493,10 @@ func (a *api) RebootNode(w http.ResponseWriter, r *http.Request) {
 
 	_, err = a.grpc.RebootNode(node.Ip, a.cfg.Grpc.AgentsPort)
 	if err != nil {
-		a.logger.WithRestApiErrorFields(r, err).Errorf("не удалось выполнить перезагрузку ноды-агента с id %s", id)
+		a.logger.WithRestApiErrorFields(r, err).Errorf("failed to restart agent node with id %d", id)
 		msg := map[string]interface{}{
 			"success": false,
-			"message": fmt.Sprintf("Не удалось выполнить перезагрузку ноды-агента с id %d", node.Id),
+			"message": fmt.Sprintf("failed to restart agent node with id %d", id),
 			"node":    node,
 		}
 		Respond(w, msg, http.StatusOK)
@@ -505,7 +505,7 @@ func (a *api) RebootNode(w http.ResponseWriter, r *http.Request) {
 
 	msg := map[string]interface{}{
 		"success": true,
-		"message": fmt.Sprintf("Нода-агент с id %d будет перезагружена через 1 минуту", node.Id),
+		"message": fmt.Sprintf("Agent node with id %d will be restarted in 1 minute", node.Id),
 		"node":    node,
 	}
 	Respond(w, msg, http.StatusOK)
