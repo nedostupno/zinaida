@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -195,4 +196,35 @@ func (s *Server) StreamServerJWTInterceptor(srv interface{}, ss grpc.ServerStrea
 	}
 
 	return handler(srv, ss)
+}
+
+type APIError struct {
+	Msg  string `json:"message"`
+	Code string `json:"code"`
+}
+
+func (a APIError) Error() string {
+	return a.Msg
+}
+
+func (s *Server) CustomHTTPError(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, w http.ResponseWriter, r *http.Request, err error) {
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(runtime.HTTPStatusFromCode(status.Code(err)))
+
+	code := status.Code(err).String()
+	fmt.Printf("err: %v\n", err)
+	err = APIError{
+		Msg:  status.Convert(err).Message(),
+		Code: code,
+	}
+
+	isContain := strings.Contains(err.Error(), "unknown field")
+	if isContain {
+		err = APIError{
+			Msg:  "Request body contains unknown json fields",
+			Code: code,
+		}
+	}
+	json.NewEncoder(w).Encode(err)
+
 }

@@ -78,6 +78,7 @@ func (s *Server) RunGatewayServer(ctx context.Context) {
 	mux := runtime.NewServeMux(
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, customMarshaller),
 		runtime.WithForwardResponseOption(s.httpResponseModifier),
+		runtime.WithErrorHandler(s.CustomHTTPError),
 	)
 
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
