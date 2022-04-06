@@ -265,7 +265,7 @@ func (a *api) CreateNode(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	_, err := a.grpc.Ping(n.Ip, a.cfg.Grpc.AgentsPort, a.cfg.Grpc.PingTimeout)
+	_, err := a.grpc.Ping(n.Ip, a.cfg.Grpc.AgentsPort)
 	if err != nil {
 		msg := map[string]interface{}{
 			"success": false,
@@ -423,7 +423,7 @@ func (a *api) GetStat(w http.ResponseWriter, r *http.Request) {
 		JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
 		return
 	}
-	_, err = a.grpc.Ping(node.Ip, a.cfg.Grpc.AgentsPort, a.cfg.Grpc.PingTimeout)
+	_, err = a.grpc.Ping(node.Ip, a.cfg.Grpc.AgentsPort)
 	if err != nil {
 
 		msg := map[string]interface{}{
@@ -478,7 +478,7 @@ func (a *api) RebootNode(w http.ResponseWriter, r *http.Request) {
 		JsonError(w, "An unexpected error has occurred", http.StatusInternalServerError)
 		return
 	}
-	_, err = a.grpc.Ping(node.Ip, a.cfg.Grpc.AgentsPort, a.cfg.Grpc.PingTimeout)
+	_, err = a.grpc.Ping(node.Ip, a.cfg.Grpc.AgentsPort)
 	if err != nil {
 
 		msg := map[string]interface{}{

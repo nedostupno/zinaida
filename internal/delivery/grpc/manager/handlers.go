@@ -87,7 +87,7 @@ func (s *Server) GetStat(ip string, port int) (*protoAgent.GetServerStatResponse
 	return resp, nil
 }
 
-func (s *Server) Ping(ip string, port int, timeout int) (*protoAgent.PingResponse, error) {
+func (s *Server) Ping(ip string, port int) (*protoAgent.PingResponse, error) {
 	conn, err := grpc.Dial(fmt.Sprintf("%v:%d", ip, port), grpc.WithInsecure())
 	if err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (s *Server) Ping(ip string, port int, timeout int) (*protoAgent.PingRespons
 
 	c := protoAgent.NewAgentClient(conn)
 	r := &protoAgent.PingRequest{}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.cfg.Grpc.PingTimeout)*time.Millisecond)
 	defer cancel()
 
 	resp, err := c.Ping(ctx, r)
