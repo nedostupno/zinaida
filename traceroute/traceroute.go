@@ -93,7 +93,7 @@ func (t *Tracer) SetOptions(cfg *config.ManagerConfig) {
 	t.options = Options{
 		port:       cfg.Trace.Port,
 		maxHops:    cfg.Trace.Max_hops,
-		timeout:    cfg.Trace.Timeout_ms,
+		timeout:    cfg.Trace.Timeout,
 		retries:    cfg.Trace.Retries,
 		packetSize: cfg.Trace.Packet_size,
 	}
@@ -122,8 +122,8 @@ func (t *Tracer) Traceroute(id int, dest string, c chan Hop, result chan models.
 	defer syscall.Close(recvSocket)
 	defer syscall.Close(sendSocket)
 
-	timeoutMs := (int64)(t.options.timeout)
-	tv := syscall.NsecToTimeval(1000 * 1000 * timeoutMs)
+	timeout := (int64)(t.options.timeout)
+	tv := syscall.NsecToTimeval(1000 * 1000 * timeout)
 	ttl := 1
 	retry := 0
 
