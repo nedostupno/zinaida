@@ -840,19 +840,12 @@ func (s *Server) RebootNode(ctx context.Context, r *protoManager.RebootNodeReque
 		return internalError, nil
 	}
 
-	isExist, err := s.repo.Nodes.CheckNodeExistenceByID(int(r.Id))
+	id, err := strconv.Atoi(r.Id)
 	if err != nil {
-		s.logger.WhithErrorFields(err).Errorf("failed to check if node with id %s exists in the database", r.Id)
-		md.Append("x-http-code", "500")
-		grpc.SendHeader(ctx, md)
-		return internalError, nil
-	}
-
-	if !isExist {
 		resp := &protoManager.RebootNodeResponse{
 			Result: &protoManager.RebootNodeResponse_Error_{
 				Error: &protoManager.RebootNodeResponse_Error{
-					Message: fmt.Sprintf("Agent nodes with id %d were not found in monitoring", r.Id),
+					Message: fmt.Sprintf("Agent nodes with id %s were not found in monitoring. id must contain only numbers", r.Id),
 					Code:    1,
 				},
 			},
@@ -862,9 +855,31 @@ func (s *Server) RebootNode(ctx context.Context, r *protoManager.RebootNodeReque
 		return resp, nil
 	}
 
-	node, err := s.repo.GetNodeByID(int(r.Id))
+	isExist, err := s.repo.Nodes.CheckNodeExistenceByID(id)
 	if err != nil {
-		s.logger.WhithErrorFields(err).Errorf("failed to get node with id %s from database", r.Id)
+		s.logger.WhithErrorFields(err).Errorf("failed to check if node with id %d exists in the database", id)
+		md.Append("x-http-code", "500")
+		grpc.SendHeader(ctx, md)
+		return internalError, nil
+	}
+
+	if !isExist {
+		resp := &protoManager.RebootNodeResponse{
+			Result: &protoManager.RebootNodeResponse_Error_{
+				Error: &protoManager.RebootNodeResponse_Error{
+					Message: fmt.Sprintf("Agent nodes with id %d were not found in monitoring", id),
+					Code:    1,
+				},
+			},
+		}
+		md.Append("x-http-code", "404")
+		grpc.SendHeader(ctx, md)
+		return resp, nil
+	}
+
+	node, err := s.repo.GetNodeByID(id)
+	if err != nil {
+		s.logger.WhithErrorFields(err).Errorf("failed to get node with id %d from database", id)
 		md.Append("x-http-code", "500")
 		grpc.SendHeader(ctx, md)
 		return internalError, nil
@@ -874,7 +889,7 @@ func (s *Server) RebootNode(ctx context.Context, r *protoManager.RebootNodeReque
 		resp := &protoManager.RebootNodeResponse{
 			Result: &protoManager.RebootNodeResponse_Error_{
 				Error: &protoManager.RebootNodeResponse_Error{
-					Message: fmt.Sprintf("Failed to connect to agent node with id %d", r.Id),
+					Message: fmt.Sprintf("Failed to connect to agent node with id %d", id),
 					Code:    2,
 				},
 			},
@@ -886,7 +901,7 @@ func (s *Server) RebootNode(ctx context.Context, r *protoManager.RebootNodeReque
 
 	_, err = s.Reboot(node.Ip, s.cfg.Grpc.AgentsPort)
 	if err != nil {
-		s.logger.WhithErrorFields(err).Errorf("Failed to reboot agent node with id %d", r.Id)
+		s.logger.WhithErrorFields(err).Errorf("Failed to reboot agent node with id %d", id)
 		md.Append("x-http-code", "500")
 		grpc.SendHeader(ctx, md)
 		return internalError, nil
@@ -894,7 +909,7 @@ func (s *Server) RebootNode(ctx context.Context, r *protoManager.RebootNodeReque
 	resp := &protoManager.RebootNodeResponse{
 		Result: &protoManager.RebootNodeResponse_Success_{
 			Success: &protoManager.RebootNodeResponse_Success{
-				Message: fmt.Sprintf("Agent node with id %d will be restarted in 1 minute", node.Id),
+				Message: fmt.Sprintf("Agent node with id %d will be restarted in 1 minute", id),
 				Node: &protoManager.NodeAgent{
 					Id:     fmt.Sprint(node.Id),
 					Ip:     node.Ip,
