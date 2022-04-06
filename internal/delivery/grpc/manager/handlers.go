@@ -95,7 +95,7 @@ func (s *Server) GetStat(ip string, port int) (*protoAgent.GetServerStatResponse
 	return resp, nil
 }
 
-func (s *Server) Ping(ip string, port int, timeout int) (*protoAgent.PingResponse, error) {
+func (s *Server) Ping(ip string, port int) (*protoAgent.PingResponse, error) {
 	conn, err := grpc.Dial(fmt.Sprintf("%v:%d", ip, port), grpc.WithInsecure())
 	if err != nil {
 		return nil, err
@@ -104,7 +104,7 @@ func (s *Server) Ping(ip string, port int, timeout int) (*protoAgent.PingRespons
 
 	c := protoAgent.NewAgentClient(conn)
 	r := &protoAgent.PingRequest{}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.cfg.Grpc.PingTimeout)*time.Millisecond)
 	defer cancel()
 
 	resp, err := c.Ping(ctx, r)
@@ -597,7 +597,7 @@ func (s *Server) CreateNode(ctx context.Context, r *protoManager.CreateNodeReque
 		}
 	}
 
-	_, err := s.Ping(n.Ip, s.cfg.Grpc.AgentsPort, s.cfg.Grpc.PingTimeout)
+	_, err := s.Ping(n.Ip, s.cfg.Grpc.AgentsPort)
 	if err != nil {
 		resp := &protoManager.CreateNodeResponse{
 			Result: &protoManager.CreateNodeResponse_Error_{
@@ -840,7 +840,7 @@ func (s *Server) RebootNode(ctx context.Context, r *protoManager.RebootNodeReque
 		grpc.SendHeader(ctx, md)
 		return internalError, nil
 	}
-	_, err = s.Ping(node.Ip, s.cfg.Grpc.AgentsPort, s.cfg.Grpc.PingTimeout)
+	_, err = s.Ping(node.Ip, s.cfg.Grpc.AgentsPort)
 	if err != nil {
 		resp := &protoManager.RebootNodeResponse{
 			Result: &protoManager.RebootNodeResponse_Error_{
@@ -926,7 +926,7 @@ func (s *Server) GetNodeStat(ctx context.Context, r *protoManager.GetNodeStatReq
 		grpc.SendHeader(ctx, md)
 		return internalError, nil
 	}
-	_, err = s.Ping(node.Ip, s.cfg.Grpc.AgentsPort, s.cfg.Grpc.PingTimeout)
+	_, err = s.Ping(node.Ip, s.cfg.Grpc.AgentsPort)
 	if err != nil {
 		resp := &protoManager.GetNodeStatResponse{
 			Result: &protoManager.GetNodeStatResponse_Error_{
