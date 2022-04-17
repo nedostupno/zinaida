@@ -212,7 +212,6 @@ func (s *Server) CustomHTTPError(ctx context.Context, mux *runtime.ServeMux, mar
 	w.WriteHeader(runtime.HTTPStatusFromCode(status.Code(err)))
 
 	code := status.Code(err).String()
-	fmt.Printf("err: %v\n", err)
 	err = APIError{
 		Msg:  status.Convert(err).Message(),
 		Code: code,
