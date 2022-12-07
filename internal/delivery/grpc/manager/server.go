@@ -4,12 +4,19 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
+	"time"
 
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/nedostupno/zinaida/internal/config"
 	"github.com/nedostupno/zinaida/internal/repository"
 	"github.com/nedostupno/zinaida/logger"
 	"github.com/nedostupno/zinaida/proto/protoManager"
+	"github.com/tmc/grpc-websocket-proxy/wsproxy"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type Server struct {
@@ -29,7 +36,11 @@ func NewManagerServer(repo *repository.Repository, logger *logger.Logger, cfg *c
 }
 
 func (s *Server) RunServer(ctx context.Context) {
-	srv := grpc.NewServer()
+	srv := grpc.NewServer(
+		grpc_middleware.WithUnaryServerChain(s.JwtAuthenticationInterceptor),
+		grpc_middleware.WithStreamServerChain(s.StreamServerJWTInterceptor),
+	)
+
 	port := s.cfg.Grpc.Port
 	ip := s.cfg.Grpc.Ip
 
@@ -50,4 +61,53 @@ func (s *Server) RunServer(ctx context.Context) {
 
 	srv.GracefulStop()
 	s.logger.Debug("grpc server success graceful shutdown")
+}
+
+func (s *Server) RunGatewayServer(ctx context.Context) {
+	port := s.cfg.Grpc.Port
+	ip := s.cfg.Grpc.Ip
+
+	addr := fmt.Sprintf("%s:%d", ip, port)
+
+	customMarshaller := &runtime.JSONPb{
+		MarshalOptions: protojson.MarshalOptions{
+			EmitUnpopulated: true, // disable 'omitempty'
+		},
+	}
+
+	mux := runtime.NewServeMux(
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, customMarshaller),
+		runtime.WithForwardResponseOption(s.httpResponseModifier),
+		runtime.WithErrorHandler(s.CustomHTTPError),
+	)
+
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+	err := protoManager.RegisterManagerHandlerFromEndpoint(ctx, mux, addr, opts)
+	if err != nil {
+		s.logger.WhithErrorFields(err).Fatalln("Failed to register manager handler")
+	}
+
+	server := http.Server{
+		Addr:    fmt.Sprintf("%s:%d", s.cfg.Rest.Ip, s.cfg.Rest.Port),
+		Handler: s.LoggingMidleware(wsproxy.WebsocketProxy(mux)),
+	}
+
+	go func() {
+		err = server.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			s.logger.WhithErrorFields(err).Fatalln("Failed to serve grpc-gateway server")
+		}
+	}()
+	s.logger.Debugf("grpc gateway server start listening on %s", server.Addr)
+
+	<-ctx.Done()
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Duration(s.cfg.Rest.ShutdownTimeout)*time.Millisecond)
+	defer cancel()
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		s.logger.WhithErrorFields(err).Fatal("failed graceful shutdown grpc gateway server")
+	}
+	s.logger.Debug("grpc gateway server success graceful shutdown")
+	<-shutdownCtx.Done()
 }

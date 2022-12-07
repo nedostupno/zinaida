@@ -2,7 +2,8 @@ syntax = "proto3";
 
 package protoAgent;
 
-option go_package = "./proto/protoAgent";
+option go_package = "github.com/nedostupno/zinaida/proto/protoAgent";
+
 
 message LA {
     double one = 1;

@@ -1,0 +1,320 @@
+syntax = "proto3";
+
+package protoManager;
+
+option go_package = "github.com/nedostupno/zinaida/proto/protoManager";
+
+import "google/api/annotations.proto";
+import "protoAgent/agent.proto";
+
+message NodeAgent {
+    string id = 1;
+    string ip = 2;
+    string domain = 3;
+}
+
+message RegistrateResponse {
+    NodeAgent nodeAgent = 1;
+}
+
+message RegistrateRequest {
+    string ip = 1;
+    string domain = 2;
+}
+
+service manager {
+    rpc Registrate (RegistrateRequest) returns (RegistrateResponse);
+    rpc GetNodes (GetNodesRequest) returns (GetNodesResponse){
+        option (google.api.http) = {
+            get: "/api/nodes"
+        };
+    };
+    rpc GetNode (GetNodeRequest) returns (GetNodeResponse){
+        option (google.api.http) = {
+            get: "/api/nodes/{id}"
+        };
+    };
+    rpc CreateNode (CreateNodeRequest) returns (CreateNodeResponse) {
+        option (google.api.http) = {
+            post: "/api/nodes"
+            body: "*"
+        };
+    }
+    rpc DeleteNode (DeleteNodeRequest) returns (DeleteNodeResponse){
+        option (google.api.http) = {
+            delete: "/api/nodes/{id}"
+        };
+    };
+    rpc RebootNode (RebootNodeRequest) returns (RebootNodeResponse){
+        option (google.api.http) = {
+            get: "/api/nodes/{id}/reboot"
+        };
+    };
+    rpc GetNodeStat (GetNodeStatRequest) returns (GetNodeStatResponse){
+        option (google.api.http) = {
+            get: "/api/nodes/{id}/stat"
+        };
+    };
+    rpc GetMap (GetMapRequest) returns (stream GetMapResponse){
+        option (google.api.http) = {
+            get: "/api/map"
+        };
+    };
+    rpc Login (LoginRequest) returns (LoginResponse) {
+        option (google.api.http) = {
+            post: "/api/login"
+            body: "*"
+        };
+    }
+    rpc Refresh (RefreshRequest) returns (RefreshResponse) {
+        option (google.api.http) = {
+            post: "/api/refresh"
+            body: "*"
+        };
+    }
+}
+
+message GetNodesRequest {
+    
+}
+
+message GetNodesResponse{
+
+    oneof result {
+        Success success = 1;
+        Error error = 2;
+    }
+    message Success {
+        string message = 1;
+        repeated NodeAgent nodes = 2;
+    }
+    message Error {
+        string message = 1;
+        Code code = 2;
+        
+        enum Code {
+            INTERNAL_ERROR = 0;
+        }
+    }
+}
+
+
+
+
+message GetNodeRequest{
+    string id = 1;
+}
+
+message GetNodeResponse{
+
+    oneof result {
+        Success success = 1;
+        Error error = 2;
+    }
+    message Success {
+        string message = 1;
+        NodeAgent node = 2;
+    }
+    message Error {
+        string message = 1;
+        Code code = 2;
+        
+        enum Code {
+            INTERNAL_ERROR = 0;
+            NODE_NOT_EXIST = 1;
+        }
+    }
+}
+
+message CreateNodeRequest {
+    string ip = 1;
+    string domain = 2;
+}
+
+message CreateNodeResponse {
+    oneof result {
+        Success success = 1;
+        Error error = 2;
+    }
+    message Success {
+        string message = 1;
+        NodeAgent node = 2;
+    }
+    message Error {
+        string message = 1;
+        Code code = 2;
+        
+        enum Code {
+            INTERNAL_ERROR = 0;
+            NODE_ALREADY_EXIST = 1;
+            NODE_IS_UNREACHABLE = 2;
+            INVALID_IP_ADDRESS = 3;
+            INVALID_DOMAIN = 4;
+            INVAILD_DOMAIN_AND_IP = 5;
+        }
+    }
+}
+
+
+message DeleteNodeRequest {
+    string id = 1;
+}
+
+message DeleteNodeResponse {
+    oneof result {
+        string success = 1;
+        Error error = 2;
+    }
+    
+    message Success {
+    }
+    
+    message Error {
+        string message = 1;
+        Code code = 2;
+        
+        enum Code {
+            INTERNAL_ERROR = 0;
+            NODE_NOT_EXIST = 1;
+        }
+    }
+}
+
+message RebootNodeRequest {
+    string id = 1;
+}
+
+message RebootNodeResponse {
+    oneof result {
+        Success success = 1;
+        Error error = 2;
+    }
+    
+    message Success {
+        string message = 1;
+        NodeAgent node = 2;
+    }
+    
+    message Error {
+        string message = 1;
+        Code code = 2;
+        
+        enum Code {
+            INTERNAL_ERROR = 0;
+            NODE_NOT_EXIST = 1;
+            NODE_IS_UNREACHABLE = 2;
+        }
+    }
+}
+
+message GetNodeStatRequest {
+    string id = 1; 
+}
+
+message GetNodeStatResponse {
+    oneof result {
+        Success success = 1;
+        Error error = 2;
+    }
+    
+    message Success {
+        string message = 1;
+        NodeAgent node = 2;
+        protoAgent.ServerStat stat = 3;
+    }
+    
+    message Error {
+        string message = 1;
+        Code code = 2;
+        
+        enum Code {
+            INTERNAL_ERROR = 0;
+            NODE_NOT_EXIST = 1;
+            NODE_IS_UNREACHABLE = 2;
+        }
+    }
+}
+
+message GetMapRequest {
+    
+}
+
+message GetMapResponse {
+    oneof result {
+        Success success = 1;
+        Error error = 2;
+    }
+    
+    message Success {
+        Hop Hop = 2;
+    }
+    
+    message Error {
+        string message = 1;
+        Code code = 2;
+        
+        enum Code {
+            INTERNAL_ERROR = 0;
+            NO_NODES_IN_MONITORING = 1;
+        }
+    }
+}
+
+message Hop {
+    int64 id = 1;
+    string destination = 2;
+    bool success = 3;
+    string address = 4;
+    string host = 5;
+    int64 elapsedTime = 6;
+    int64 ttl = 7;
+}
+
+message LoginRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    oneof result {
+        JWT jwt = 1;
+        Error error = 2;
+    }
+
+    message Error {
+        string message = 1;
+        Code code = 2;
+        
+        enum Code {
+            INTERNAL_ERROR = 0;
+            INCORRECT_DATA = 1;
+        }
+    }
+}
+
+message JWT {
+    string access_token = 2;
+    string refresh_token = 3;
+}
+
+message RefreshRequest {
+    string refresh_token = 1;
+}
+
+message RefreshResponse {
+    oneof result {
+        JWT jwt = 1;
+        Error error = 2;
+    }
+
+    message Error {
+        string message = 1;
+        Code code = 2;
+        
+        enum Code {
+            INTERNAL_ERROR = 0;
+            INVALID_REFRESH_TOKEN = 1;
+            MISSED_REFRESH_TOKEN = 2;
+        }
+    }
+}

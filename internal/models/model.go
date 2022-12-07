@@ -1,14 +1,5 @@
 package models
 
-type RefreshToken struct {
-	Token string `json:"token"`
-}
-
-type Credential struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
 type NodeAgent struct {
 	Id          int    `json:"id"`
 	Ip          string `json:"ip"`
